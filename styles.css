@@ -158,12 +158,28 @@ body {
   display: none;
 }
 
-.field span {
+.field:not(.strategy-field) {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label error"
+    "input input";
+  column-gap: 8px;
+  row-gap: 3px;
+  align-items: end;
+}
+
+.field:not(.strategy-field) > span:first-child {
+  grid-area: label;
   font-size: 0.95rem;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.field:not(.strategy-field) > input[type="number"],
+.field:not(.strategy-field) > select {
+  grid-area: input;
 }
 
 input[type="number"],
@@ -235,10 +251,16 @@ select:focus {
 
 .field-error {
   display: block;
+  grid-area: error;
   min-height: 0.85em;
   font-size: 0.76rem;
   color: var(--error);
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 26ch;
+  justify-self: end;
 }
 
 .field-error:empty {
