@@ -1,4 +1,8 @@
 import {
+  DEFAULT_JITTER_TYPE,
+  resolveJitterType,
+} from "./backoff.js";
+import {
   DEFAULT_DISPLAY_MODE,
   formatDuration,
   resolveDisplayMode,
@@ -50,15 +54,55 @@ const hoverGuidePlugin = {
 };
 
 /**
- * @param {Array<{retry:number,delayMs:number,cumulativeDelayMs:number}>} points
+ * @param {{
+ *   delayMs:number,
+ *   expectedDelayMs?:number,
+ *   minDelayMs?:number,
+ *   maxDelayMs?:number,
+ *   cumulativeDelayMs:number,
+ *   cumulativeMinDelayMs?:number,
+ *   cumulativeMaxDelayMs?:number
+ * }} point
  * @param {import("./chartMode.js").ChartMode} chartMode
  */
-function toChartData(points, chartMode) {
+function pointValues(point, chartMode) {
+  if (chartMode === "cumulative") {
+    return {
+      expected: point.cumulativeDelayMs,
+      min: point.cumulativeMinDelayMs ?? point.cumulativeDelayMs,
+      max: point.cumulativeMaxDelayMs ?? point.cumulativeDelayMs,
+    };
+  }
+
+  return {
+    expected: point.expectedDelayMs ?? point.delayMs,
+    min: point.minDelayMs ?? point.delayMs,
+    max: point.maxDelayMs ?? point.delayMs,
+  };
+}
+
+/**
+ * @param {Array<{retry:number}> & Array<{
+ *   delayMs:number,
+ *   expectedDelayMs?:number,
+ *   minDelayMs?:number,
+ *   maxDelayMs?:number,
+ *   cumulativeDelayMs:number,
+ *   cumulativeMinDelayMs?:number,
+ *   cumulativeMaxDelayMs?:number
+ * }>} points
+ * @param {import("./chartMode.js").ChartMode} chartMode
+ * @param {import("./backoff.js").JitterType} jitterType
+ */
+function toChartData(points, chartMode, jitterType) {
+  const resolvedJitterType = resolveJitterType(jitterType);
+
   return {
     labels: points.map((point) => point.retry),
-    values: points.map((point) =>
-      chartMode === "cumulative" ? point.cumulativeDelayMs : point.delayMs,
-    ),
+    expectedValues: points.map((point) => pointValues(point, chartMode).expected),
+    minValues: points.map((point) => pointValues(point, chartMode).min),
+    maxValues: points.map((point) => pointValues(point, chartMode).max),
+    showRange: resolvedJitterType !== "none",
   };
 }
 
@@ -75,6 +119,7 @@ function yAxisTitle(displayMode, chartMode) {
  * @typedef {object} ChartThemeTokens
  * @property {string} lineColor
  * @property {string} fillColor
+ * @property {string} rangeFillColor
  * @property {string} axisTextColor
  * @property {string} gridColor
  * @property {string} tooltipBackgroundColor
@@ -93,6 +138,14 @@ export function createDelayChart(canvas) {
 
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
   let currentChartMode = DEFAULT_CHART_MODE;
+  let currentJitterType = DEFAULT_JITTER_TYPE;
+  let currentChartData = {
+    labels: [],
+    expectedValues: [],
+    minValues: [],
+    maxValues: [],
+    showRange: false,
+  };
   let activePointIndex = null;
   let isPointerInsideChart = false;
 
@@ -161,7 +214,7 @@ export function createDelayChart(canvas) {
       labels: [],
       datasets: [
         {
-          label: "Delay",
+          label: "Expected Delay",
           data: [],
           borderColor: "#27272a",
           backgroundColor: "rgba(39, 39, 42, 0.12)",
@@ -170,6 +223,29 @@ export function createDelayChart(canvas) {
           pointHoverRadius: 4,
           pointHitRadius: 18,
           fill: true,
+          tension: 0.2,
+        },
+        {
+          label: "Min Delay",
+          data: [],
+          borderColor: "rgba(39, 39, 42, 0)",
+          borderWidth: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHitRadius: 0,
+          fill: false,
+          tension: 0.2,
+        },
+        {
+          label: "Max Delay",
+          data: [],
+          borderColor: "rgba(39, 39, 42, 0)",
+          backgroundColor: "rgba(39, 39, 42, 0.18)",
+          borderWidth: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHitRadius: 0,
+          fill: "-1",
           tension: 0.2,
         },
       ],
@@ -196,10 +272,28 @@ export function createDelayChart(canvas) {
           intersect: false,
           mode: "index",
           displayColors: false,
+          filter(context) {
+            return context.datasetIndex === 0;
+          },
           callbacks: {
             label(context) {
-              const value = context.parsed.y ?? 0;
-              return formatDuration(value, currentDisplayMode);
+              const index = context.dataIndex;
+              if (index < 0 || index >= currentChartData.expectedValues.length) {
+                return "-";
+              }
+
+              const expected = currentChartData.expectedValues[index];
+              if (!currentChartData.showRange) {
+                return formatDuration(expected, currentDisplayMode);
+              }
+
+              const min = currentChartData.minValues[index];
+              const max = currentChartData.maxValues[index];
+              return [
+                `Min: ${formatDuration(min, currentDisplayMode)}`,
+                `Expected: ${formatDuration(expected, currentDisplayMode)}`,
+                `Max: ${formatDuration(max, currentDisplayMode)}`,
+              ];
             },
           },
         },
@@ -257,12 +351,22 @@ export function createDelayChart(canvas) {
   }
 
   /**
+   * @param {import("./backoff.js").JitterType} jitterType
+   */
+  function applyJitterType(jitterType) {
+    currentJitterType = resolveJitterType(jitterType);
+  }
+
+  /**
    * @param {ChartThemeTokens} tokens
    */
   function setTheme(tokens) {
-    const dataset = chart.data.datasets[0];
-    dataset.borderColor = tokens.lineColor;
-    dataset.backgroundColor = tokens.fillColor;
+    const expectedDataset = chart.data.datasets[0];
+    const maxDataset = chart.data.datasets[2];
+
+    expectedDataset.borderColor = tokens.lineColor;
+    expectedDataset.backgroundColor = tokens.fillColor;
+    maxDataset.backgroundColor = tokens.rangeFillColor;
 
     chart.options.plugins.tooltip.backgroundColor = tokens.tooltipBackgroundColor;
     chart.options.plugins.tooltip.titleColor = tokens.tooltipTextColor;
@@ -299,14 +403,34 @@ export function createDelayChart(canvas) {
   canvas.addEventListener("touchcancel", handlePointerLeave, { passive: true });
 
   return {
-    update(points, displayMode = currentDisplayMode, chartMode = currentChartMode) {
+    update(
+      points,
+      jitterType = currentJitterType,
+      displayMode = currentDisplayMode,
+      chartMode = currentChartMode,
+    ) {
       applyDisplayMode(displayMode);
       applyChartMode(chartMode);
+      applyJitterType(jitterType);
       chart.options.animation = resolveAnimationOptions();
-      const chartData = toChartData(points, currentChartMode);
+
+      const chartData = toChartData(points, currentChartMode, currentJitterType);
+      currentChartData = chartData;
       chart.data.labels = chartData.labels;
-      chart.data.datasets[0].data = chartData.values;
-      if (chartData.values.length === 0) {
+
+      const expectedDataset = chart.data.datasets[0];
+      const minDataset = chart.data.datasets[1];
+      const maxDataset = chart.data.datasets[2];
+
+      expectedDataset.data = chartData.expectedValues;
+      expectedDataset.fill = chartData.showRange ? false : true;
+
+      minDataset.hidden = !chartData.showRange;
+      maxDataset.hidden = !chartData.showRange;
+      minDataset.data = chartData.showRange ? chartData.minValues : [];
+      maxDataset.data = chartData.showRange ? chartData.maxValues : [];
+
+      if (chartData.expectedValues.length === 0) {
         clearActivePoint();
       } else if (isPointerInsideChart && activePointIndex !== null) {
         setActivePoint(activePointIndex);
@@ -319,8 +443,20 @@ export function createDelayChart(canvas) {
       applyDisplayMode(displayMode);
       applyChartMode(chartMode);
       chart.options.animation = resolveAnimationOptions();
+
       chart.data.labels = [];
-      chart.data.datasets[0].data = [];
+      for (const dataset of chart.data.datasets) {
+        dataset.data = [];
+        dataset.hidden = false;
+      }
+      currentChartData = {
+        labels: [],
+        expectedValues: [],
+        minValues: [],
+        maxValues: [],
+        showRange: false,
+      };
+
       clearActivePoint();
       chart.update();
     },

@@ -98,21 +98,58 @@
         <section class="content-block controls-panel">
           <div id="backoff-controls" class="controls-grid">
             <fieldset class="field field--full strategy-field" aria-label="Retry strategy">
-              <div class="strategy-toggle">
-                <input
-                  id="strategy-exponential"
-                  type="radio"
-                  name="strategy"
-                  value="exponential"
-                  checked
-                />
-                <label for="strategy-exponential" class="strategy-option">Exponential</label>
+              <div class="strategy-row">
+                <div class="strategy-toggle">
+                  <input
+                    id="strategy-exponential"
+                    type="radio"
+                    name="strategy"
+                    value="exponential"
+                    checked
+                  />
+                  <label for="strategy-exponential" class="strategy-option">Exponential</label>
 
-                <input id="strategy-linear" type="radio" name="strategy" value="linear" />
-                <label for="strategy-linear" class="strategy-option">Linear</label>
+                  <input id="strategy-linear" type="radio" name="strategy" value="linear" />
+                  <label for="strategy-linear" class="strategy-option">Linear</label>
 
-                <input id="strategy-fixed" type="radio" name="strategy" value="fixed" />
-                <label for="strategy-fixed" class="strategy-option">Fixed</label>
+                  <input id="strategy-fixed" type="radio" name="strategy" value="fixed" />
+                  <label for="strategy-fixed" class="strategy-option">Fixed</label>
+                </div>
+
+                <div class="jitter-control">
+                  <button
+                    id="jitter-trigger"
+                    class="jitter-trigger"
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-controls="jitter-popover"
+                    aria-expanded="false"
+                  >
+                    <span>Jitter:</span>
+                    <span id="jitter-trigger-value">None</span>
+                  </button>
+
+                  <div
+                    id="jitter-popover"
+                    class="jitter-popover"
+                    role="dialog"
+                    aria-label="Jitter settings"
+                    hidden
+                  >
+                    <fieldset class="jitter-field" aria-label="Jitter mode">
+                      <div class="jitter-toggle">
+                        <input id="jitter-none" type="radio" name="jitter" value="none" checked />
+                        <label for="jitter-none" class="jitter-option">None</label>
+
+                        <input id="jitter-equal" type="radio" name="jitter" value="equal" />
+                        <label for="jitter-equal" class="jitter-option">Equal</label>
+
+                        <input id="jitter-full" type="radio" name="jitter" value="full" />
+                        <label for="jitter-full" class="jitter-option">Full</label>
+                      </div>
+                    </fieldset>
+                  </div>
+                </div>
               </div>
             </fieldset>
 
@@ -255,14 +292,15 @@
               <thead>
                 <tr>
                   <th>Retry #</th>
-                  <th id="raw-delay-header">Raw Delay (ms)</th>
-                  <th id="capped-delay-header">Capped Delay (ms)</th>
+                  <th id="primary-delay-header">Delay (ms)</th>
+                  <th id="secondary-delay-header" hidden>Expected Delay (ms)</th>
+                  <th id="tertiary-delay-header" hidden>Max Delay (ms)</th>
                   <th id="cumulative-delay-header">Cumulative Delay (ms)</th>
                 </tr>
               </thead>
               <tbody id="schedule-body">
                 <tr>
-                  <td class="placeholder-cell" colspan="4">
+                  <td class="placeholder-cell" colspan="3">
                     Adjust inputs to generate a schedule.
                   </td>
                 </tr>

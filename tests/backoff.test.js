@@ -82,6 +82,73 @@ test("fixed schedule respects max delay cap", () => {
   assert.equal(schedule[2].cumulativeDelayMs, 3000);
 });
 
+test("equal jitter exposes min, expected, and max delay ranges", () => {
+  const schedule = generateSchedule({
+    strategy: "linear",
+    initialDelayMs: 500,
+    maxRetries: 2,
+    maxDelayMs: null,
+    incrementMs: 500,
+    jitter: "equal",
+  });
+
+  assert.deepEqual(
+    schedule.map((point) => ({
+      minDelayMs: point.minDelayMs,
+      expectedDelayMs: point.expectedDelayMs,
+      maxDelayMs: point.maxDelayMs,
+      cumulativeDelayMs: point.cumulativeDelayMs,
+      cumulativeMinDelayMs: point.cumulativeMinDelayMs,
+      cumulativeMaxDelayMs: point.cumulativeMaxDelayMs,
+    })),
+    [
+      {
+        minDelayMs: 250,
+        expectedDelayMs: 375,
+        maxDelayMs: 500,
+        cumulativeDelayMs: 375,
+        cumulativeMinDelayMs: 250,
+        cumulativeMaxDelayMs: 500,
+      },
+      {
+        minDelayMs: 500,
+        expectedDelayMs: 750,
+        maxDelayMs: 1000,
+        cumulativeDelayMs: 1125,
+        cumulativeMinDelayMs: 750,
+        cumulativeMaxDelayMs: 1500,
+      },
+    ],
+  );
+});
+
+test("full jitter is calculated from capped deterministic delay", () => {
+  const schedule = generateSchedule({
+    strategy: "fixed",
+    initialDelayMs: 1200,
+    maxRetries: 3,
+    maxDelayMs: 1000,
+    jitter: "full",
+  });
+
+  assert.deepEqual(
+    schedule.map((point) => ({
+      minDelayMs: point.minDelayMs,
+      expectedDelayMs: point.expectedDelayMs,
+      maxDelayMs: point.maxDelayMs,
+      delayMs: point.delayMs,
+    })),
+    [
+      { minDelayMs: 0, expectedDelayMs: 500, maxDelayMs: 1000, delayMs: 500 },
+      { minDelayMs: 0, expectedDelayMs: 500, maxDelayMs: 1000, delayMs: 500 },
+      { minDelayMs: 0, expectedDelayMs: 500, maxDelayMs: 1000, delayMs: 500 },
+    ],
+  );
+  assert.equal(schedule[2].cumulativeDelayMs, 1500);
+  assert.equal(schedule[2].cumulativeMinDelayMs, 0);
+  assert.equal(schedule[2].cumulativeMaxDelayMs, 3000);
+});
+
 test("maxRetries = 0 returns empty schedule and zero summary", () => {
   const schedule = generateSchedule({
     strategy: "linear",
@@ -89,6 +156,23 @@ test("maxRetries = 0 returns empty schedule and zero summary", () => {
     maxRetries: 0,
     maxDelayMs: null,
     incrementMs: 100,
+  });
+
+  assert.deepEqual(schedule, []);
+  assert.deepEqual(summarizeSchedule(schedule), {
+    totalRetries: 0,
+    finalDelayMs: 0,
+    totalDelayMs: 0,
+  });
+});
+
+test("maxRetries = 0 returns empty schedule with jitter enabled", () => {
+  const schedule = generateSchedule({
+    strategy: "fixed",
+    initialDelayMs: 100,
+    maxRetries: 0,
+    maxDelayMs: null,
+    jitter: "full",
   });
 
   assert.deepEqual(schedule, []);
@@ -109,6 +193,42 @@ test("maxRetries upper bound accepts 1000", () => {
   });
 
   assert.equal(errors.length, 0);
+});
+
+test("validation accepts known jitter types", () => {
+  const baseConfig = {
+    strategy: "fixed",
+    initialDelayMs: 100,
+    maxRetries: 2,
+    maxDelayMs: null,
+  };
+
+  assert.equal(validateConfig({ ...baseConfig, jitter: "none" }).length, 0);
+  assert.equal(validateConfig({ ...baseConfig, jitter: "equal" }).length, 0);
+  assert.equal(validateConfig({ ...baseConfig, jitter: "full" }).length, 0);
+});
+
+test("validation rejects unknown jitter types", () => {
+  const errors = validateConfig({
+    strategy: "fixed",
+    initialDelayMs: 100,
+    maxRetries: 2,
+    maxDelayMs: null,
+    jitter: "random",
+  });
+
+  assert.ok(errors.some((error) => error.field === "jitter"));
+  assert.throws(
+    () =>
+      generateSchedule({
+        strategy: "fixed",
+        initialDelayMs: 100,
+        maxRetries: 2,
+        maxDelayMs: null,
+        jitter: "random",
+      }),
+    /Invalid configuration/,
+  );
 });
 
 test("validation rejects maxRetries above 1000", () => {

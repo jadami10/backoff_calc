@@ -1,5 +1,6 @@
 import { isDisplayMode } from "./display.js";
 import { isChartMode } from "./chartMode.js";
+import { isJitterType } from "./backoff.js";
 
 /**
  * @typedef {"exponential" | "linear" | "fixed"} BackoffStrategy
@@ -13,6 +14,7 @@ import { isChartMode } from "./chartMode.js";
  * @property {string} [maxDelayMs]
  * @property {string} [factor]
  * @property {string} [incrementMs]
+ * @property {import("./backoff.js").JitterType} [jitter]
  * @property {import("./display.js").DisplayMode} [displayMode]
  * @property {import("./chartMode.js").ChartMode} [chartMode]
  */
@@ -24,6 +26,7 @@ const PARAM_KEYS = {
   maxDelayMs: "maxDelayMs",
   factor: "factor",
   incrementMs: "incrementMs",
+  jitter: "jitter",
   displayMode: "displayMode",
   chartMode: "chartMode",
 };
@@ -72,6 +75,9 @@ export function createShareUrl(baseUrl, state) {
   if (typeof state.incrementMs === "string") {
     url.searchParams.set(PARAM_KEYS.incrementMs, state.incrementMs);
   }
+  if (isJitterType(state.jitter)) {
+    url.searchParams.set(PARAM_KEYS.jitter, state.jitter);
+  }
   if (isDisplayMode(state.displayMode)) {
     url.searchParams.set(PARAM_KEYS.displayMode, state.displayMode);
   }
@@ -89,6 +95,7 @@ export function createShareUrl(baseUrl, state) {
 export function readShareStateFromUrl(urlValue) {
   const url = new URL(urlValue);
   const strategy = readParam(url.searchParams, PARAM_KEYS.strategy);
+  const jitter = readParam(url.searchParams, PARAM_KEYS.jitter);
   const displayMode = readParam(url.searchParams, PARAM_KEYS.displayMode);
   const chartMode = readParam(url.searchParams, PARAM_KEYS.chartMode);
   const state = {};
@@ -102,6 +109,9 @@ export function readShareStateFromUrl(urlValue) {
   state.maxDelayMs = readParam(url.searchParams, PARAM_KEYS.maxDelayMs);
   state.factor = readParam(url.searchParams, PARAM_KEYS.factor);
   state.incrementMs = readParam(url.searchParams, PARAM_KEYS.incrementMs);
+  if (isJitterType(jitter)) {
+    state.jitter = jitter;
+  }
 
   if (isDisplayMode(displayMode)) {
     state.displayMode = displayMode;

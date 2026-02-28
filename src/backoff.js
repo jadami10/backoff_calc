@@ -1,11 +1,15 @@
 /**
  * @typedef {"exponential" | "linear" | "fixed"} BackoffStrategy
  */
+/**
+ * @typedef {"none" | "equal" | "full"} JitterType
+ */
 
 const MAX_RETRIES_LIMIT = 1000;
+export const DEFAULT_JITTER_TYPE = "none";
 
 /**
- * @typedef {"config" | "strategy" | "initialDelayMs" | "maxRetries" | "maxDelayMs" | "factor" | "incrementMs"} ValidationErrorField
+ * @typedef {"config" | "strategy" | "initialDelayMs" | "maxRetries" | "maxDelayMs" | "factor" | "incrementMs" | "jitter"} ValidationErrorField
  */
 
 /**
@@ -22,14 +26,20 @@ const MAX_RETRIES_LIMIT = 1000;
  * @property {number | null} maxDelayMs
  * @property {number} [factor]
  * @property {number} [incrementMs]
+ * @property {JitterType} [jitter]
  */
 
 /**
  * @typedef {object} RetryPoint
  * @property {number} retry
  * @property {number} rawDelayMs
+ * @property {number} minDelayMs
+ * @property {number} expectedDelayMs
+ * @property {number} maxDelayMs
  * @property {number} delayMs
  * @property {number} cumulativeDelayMs
+ * @property {number} cumulativeMinDelayMs
+ * @property {number} cumulativeMaxDelayMs
  */
 
 /**
@@ -41,6 +51,53 @@ const MAX_RETRIES_LIMIT = 1000;
 
 function isFiniteNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is JitterType}
+ */
+export function isJitterType(value) {
+  return value === "none" || value === "equal" || value === "full";
+}
+
+/**
+ * @param {unknown} value
+ * @returns {JitterType}
+ */
+export function resolveJitterType(value) {
+  if (isJitterType(value)) {
+    return value;
+  }
+  return DEFAULT_JITTER_TYPE;
+}
+
+/**
+ * @param {number} cappedDelayMs
+ * @param {JitterType} jitterType
+ */
+function toDelayRange(cappedDelayMs, jitterType) {
+  if (jitterType === "equal") {
+    return {
+      minDelayMs: cappedDelayMs / 2,
+      expectedDelayMs: cappedDelayMs * 0.75,
+      maxDelayMs: cappedDelayMs,
+    };
+  }
+
+  if (jitterType === "full") {
+    return {
+      minDelayMs: 0,
+      expectedDelayMs: cappedDelayMs / 2,
+      maxDelayMs: cappedDelayMs,
+    };
+  }
+
+  return {
+    minDelayMs: cappedDelayMs,
+    expectedDelayMs: cappedDelayMs,
+    maxDelayMs: cappedDelayMs,
+  };
 }
 
 /**
@@ -96,6 +153,10 @@ export function validateConfig(config) {
     }
   }
 
+  if (config.jitter !== undefined && !isJitterType(config.jitter)) {
+    errors.push({ field: "jitter", message: "Must be none, equal, or full." });
+  }
+
   return errors;
 }
 
@@ -109,8 +170,11 @@ export function generateSchedule(config) {
     throw new Error(`Invalid configuration: ${errors.map((error) => error.message).join(" ")}`);
   }
 
+  const jitterType = resolveJitterType(config.jitter);
   const schedule = [];
   let cumulativeDelayMs = 0;
+  let cumulativeMinDelayMs = 0;
+  let cumulativeMaxDelayMs = 0;
 
   for (let retry = 1; retry <= config.maxRetries; retry += 1) {
     let rawDelayMs;
@@ -123,16 +187,25 @@ export function generateSchedule(config) {
       rawDelayMs = config.initialDelayMs;
     }
 
-    const delayMs =
+    const cappedDelayMs =
       config.maxDelayMs == null ? rawDelayMs : Math.min(rawDelayMs, config.maxDelayMs);
+    const { minDelayMs, expectedDelayMs, maxDelayMs } = toDelayRange(cappedDelayMs, jitterType);
+    const delayMs = expectedDelayMs;
 
     cumulativeDelayMs += delayMs;
+    cumulativeMinDelayMs += minDelayMs;
+    cumulativeMaxDelayMs += maxDelayMs;
 
     schedule.push({
       retry,
       rawDelayMs,
+      minDelayMs,
+      expectedDelayMs,
+      maxDelayMs,
       delayMs,
       cumulativeDelayMs,
+      cumulativeMinDelayMs,
+      cumulativeMaxDelayMs,
     });
   }
 

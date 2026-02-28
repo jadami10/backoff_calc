@@ -1,4 +1,10 @@
-import { generateSchedule, summarizeSchedule, validateConfig } from "./backoff.js";
+import {
+  isJitterType,
+  resolveJitterType,
+  generateSchedule,
+  summarizeSchedule,
+  validateConfig,
+} from "./backoff.js";
 import { createDelayChart } from "./chart.js";
 import { resolveDisplayMode } from "./display.js";
 import { resolveChartMode } from "./chartMode.js";
@@ -34,15 +40,20 @@ const strategyInputs = Array.from(
 const chartModeInputs = Array.from(
   document.querySelectorAll('input[name="chartMode"]'),
 );
+const jitterInputs = Array.from(document.querySelectorAll('input[name="jitter"]'));
 const factorGroup = document.querySelector("#factor-group");
 const incrementGroup = document.querySelector("#increment-group");
+const jitterTrigger = document.querySelector("#jitter-trigger");
+const jitterPopover = document.querySelector("#jitter-popover");
+const jitterTriggerValue = document.querySelector("#jitter-trigger-value");
 const shareLinkButton = document.querySelector("#share-link");
 const themeToggle = document.querySelector("#theme-toggle");
 const scheduleBody = document.querySelector("#schedule-body");
 const chartCanvas = document.querySelector("#delay-chart");
 const displayModeSelect = document.querySelector("#display-mode");
-const rawDelayHeader = document.querySelector("#raw-delay-header");
-const cappedDelayHeader = document.querySelector("#capped-delay-header");
+const primaryDelayHeader = document.querySelector("#primary-delay-header");
+const secondaryDelayHeader = document.querySelector("#secondary-delay-header");
+const tertiaryDelayHeader = document.querySelector("#tertiary-delay-header");
 const cumulativeDelayHeader = document.querySelector("#cumulative-delay-header");
 const initialDelayInput = document.querySelector("#initialDelayMs");
 const maxRetriesInput = document.querySelector("#maxRetries");
@@ -68,15 +79,21 @@ if (
   strategyInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   chartModeInputs.length === 0 ||
   chartModeInputs.some((input) => !(input instanceof HTMLInputElement)) ||
+  jitterInputs.length === 0 ||
+  jitterInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   !(factorGroup instanceof HTMLElement) ||
   !(incrementGroup instanceof HTMLElement) ||
+  !(jitterTrigger instanceof HTMLButtonElement) ||
+  !(jitterPopover instanceof HTMLElement) ||
+  !(jitterTriggerValue instanceof HTMLElement) ||
   !(shareLinkButton instanceof HTMLButtonElement) ||
   !(themeToggle instanceof HTMLButtonElement) ||
   !(scheduleBody instanceof HTMLElement) ||
   !(chartCanvas instanceof HTMLCanvasElement) ||
   !(displayModeSelect instanceof HTMLSelectElement) ||
-  !(rawDelayHeader instanceof HTMLElement) ||
-  !(cappedDelayHeader instanceof HTMLElement) ||
+  !(primaryDelayHeader instanceof HTMLElement) ||
+  !(secondaryDelayHeader instanceof HTMLElement) ||
+  !(tertiaryDelayHeader instanceof HTMLElement) ||
   !(cumulativeDelayHeader instanceof HTMLElement) ||
   !(initialDelayInput instanceof HTMLInputElement) ||
   !(maxRetriesInput instanceof HTMLInputElement) ||
@@ -102,6 +119,7 @@ const configInputs = {
   maxDelayMs: maxDelayInput,
   factor: factorInput,
   incrementMs: incrementInput,
+  jitterInputs,
 };
 
 const chart = createDelayChart(chartCanvas);
@@ -115,6 +133,7 @@ function getChartThemeTokens() {
   return {
     lineColor: readCssVariable("--chart-line"),
     fillColor: readCssVariable("--chart-fill"),
+    rangeFillColor: readCssVariable("--chart-range-fill"),
     axisTextColor: readCssVariable("--chart-axis"),
     gridColor: readCssVariable("--chart-grid"),
     tooltipBackgroundColor: readCssVariable("--chart-tooltip-bg"),
@@ -177,6 +196,49 @@ function getSelectedChartMode() {
   return resolveChartMode(selectedMode);
 }
 
+function getSelectedJitterType() {
+  return resolveJitterType(jitterInputs.find((input) => input.checked)?.value);
+}
+
+/**
+ * @param {import("./backoff.js").JitterType} jitterType
+ */
+function jitterLabel(jitterType) {
+  if (jitterType === "equal") {
+    return "Equal";
+  }
+  if (jitterType === "full") {
+    return "Full";
+  }
+  return "None";
+}
+
+function isJitterPopoverOpen() {
+  return !jitterPopover.hidden;
+}
+
+/**
+ * @param {boolean} open
+ */
+function setJitterPopoverOpen(open) {
+  jitterPopover.hidden = !open;
+  jitterTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+/**
+ * @param {{focusTrigger?: boolean}} options
+ */
+function closeJitterPopover(options = {}) {
+  setJitterPopoverOpen(false);
+  if (options.focusTrigger) {
+    jitterTrigger.focus();
+  }
+}
+
+function syncJitterTriggerValue() {
+  jitterTriggerValue.textContent = jitterLabel(getSelectedJitterType());
+}
+
 function applySharedStateFromUrl() {
   const shareState = readShareStateFromUrl(window.location.href);
 
@@ -205,6 +267,12 @@ function applySharedStateFromUrl() {
   }
   if (typeof shareState.incrementMs === "string") {
     incrementInput.value = shareState.incrementMs;
+  }
+  if (isJitterType(shareState.jitter)) {
+    const targetInput = jitterInputs.find((input) => input.value === shareState.jitter);
+    if (targetInput != null) {
+      targetInput.checked = true;
+    }
   }
   if (typeof shareState.displayMode === "string") {
     displayModeSelect.value = shareState.displayMode;
@@ -320,6 +388,8 @@ function recompute() {
   updateStrategyFields();
   const displayMode = resolveDisplayMode(displayModeSelect.value);
   const chartMode = getSelectedChartMode();
+  const jitterType = getSelectedJitterType();
+  syncJitterTriggerValue();
 
   const config = readConfigFromInputs(configInputs);
   const errors = validateConfig(config);
@@ -349,12 +419,13 @@ function recompute() {
   const summary = summarizeSchedule(points);
 
   renderDelayTableHeaders(displayMode, {
-    rawDelay: rawDelayHeader,
-    cappedDelay: cappedDelayHeader,
+    primaryDelay: primaryDelayHeader,
+    secondaryDelay: secondaryDelayHeader,
+    tertiaryDelay: tertiaryDelayHeader,
     cumulativeDelay: cumulativeDelayHeader,
-  });
-  chart.update(points, displayMode, chartMode);
-  renderScheduleTable(points, scheduleBody, displayMode);
+  }, jitterType);
+  chart.update(points, jitterType, displayMode, chartMode);
+  renderScheduleTable(points, scheduleBody, displayMode, jitterType);
   renderSummary(summary, summaryElements, displayMode);
 }
 
@@ -362,6 +433,7 @@ const debouncedRecompute = debounce(recompute, 100);
 const recomputeInputs = [
   ...strategyInputs,
   ...chartModeInputs,
+  ...jitterInputs,
   initialDelayInput,
   maxRetriesInput,
   maxDelayInput,
@@ -374,6 +446,43 @@ for (const input of recomputeInputs) {
 }
 displayModeSelect.addEventListener("change", recompute);
 
+jitterTrigger.addEventListener("click", () => {
+  setJitterPopoverOpen(!isJitterPopoverOpen());
+});
+
+document.addEventListener("pointerdown", (event) => {
+  if (!isJitterPopoverOpen()) {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof Node)) {
+    closeJitterPopover();
+    return;
+  }
+
+  if (jitterPopover.contains(target) || jitterTrigger.contains(target)) {
+    return;
+  }
+
+  closeJitterPopover();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !isJitterPopoverOpen()) {
+    return;
+  }
+  event.preventDefault();
+  closeJitterPopover({ focusTrigger: true });
+});
+
+for (const jitterInput of jitterInputs) {
+  jitterInput.addEventListener("change", () => {
+    syncJitterTriggerValue();
+    closeJitterPopover({ focusTrigger: true });
+  });
+}
+
 shareLinkButton.addEventListener("click", async () => {
   const shareUrl = createShareUrl(window.location.href, {
     strategy: getSelectedStrategy(),
@@ -382,6 +491,7 @@ shareLinkButton.addEventListener("click", async () => {
     maxDelayMs: maxDelayInput.value,
     factor: factorInput.value,
     incrementMs: incrementInput.value,
+    jitter: getSelectedJitterType(),
     displayMode: resolveDisplayMode(displayModeSelect.value),
     chartMode: getSelectedChartMode(),
   });
@@ -396,4 +506,5 @@ shareLinkButton.addEventListener("click", async () => {
 
 applySharedStateFromUrl();
 updateStrategyFields();
+syncJitterTriggerValue();
 recompute();

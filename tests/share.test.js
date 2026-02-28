@@ -11,6 +11,7 @@ test("createShareUrl encodes current configuration into query params", () => {
     maxDelayMs: "",
     factor: "2",
     incrementMs: "400",
+    jitter: "equal",
     displayMode: "humanize",
     chartMode: "cumulative",
   });
@@ -24,16 +25,18 @@ test("createShareUrl encodes current configuration into query params", () => {
   assert.equal(parsed.searchParams.get("maxDelayMs"), "");
   assert.equal(parsed.searchParams.get("factor"), "2");
   assert.equal(parsed.searchParams.get("incrementMs"), "400");
+  assert.equal(parsed.searchParams.get("jitter"), "equal");
   assert.equal(parsed.searchParams.get("displayMode"), "humanize");
   assert.equal(parsed.searchParams.get("chartMode"), "cumulative");
 });
 
 test("readShareStateFromUrl accepts known params and ignores invalid mode values", () => {
   const state = readShareStateFromUrl(
-    "https://example.com/?strategy=unknown&displayMode=days&chartMode=total&maxRetries=5&factor=1.5",
+    "https://example.com/?strategy=unknown&jitter=random&displayMode=days&chartMode=total&maxRetries=5&factor=1.5",
   );
 
   assert.equal(state.strategy, undefined);
+  assert.equal(state.jitter, undefined);
   assert.equal(state.displayMode, undefined);
   assert.equal(state.chartMode, undefined);
   assert.equal(state.maxRetries, "5");
@@ -48,6 +51,7 @@ test("share state round-trips strategy, display mode, and chart mode", () => {
     maxDelayMs: "10000",
     factor: "2",
     incrementMs: "500",
+    jitter: "full",
     displayMode: "ms",
     chartMode: "delay",
   };
@@ -60,6 +64,7 @@ test("share state round-trips strategy, display mode, and chart mode", () => {
   assert.equal(parsed.maxDelayMs, original.maxDelayMs);
   assert.equal(parsed.factor, original.factor);
   assert.equal(parsed.incrementMs, original.incrementMs);
+  assert.equal(parsed.jitter, original.jitter);
   assert.equal(parsed.displayMode, original.displayMode);
   assert.equal(parsed.chartMode, original.chartMode);
 });
