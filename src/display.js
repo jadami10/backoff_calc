@@ -43,7 +43,7 @@ export function unitLabel(displayMode) {
     case "h":
       return "h";
     case "humanize":
-      return "humanized";
+      return "human-readable";
     default:
       return "ms";
   }

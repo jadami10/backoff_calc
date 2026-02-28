@@ -439,6 +439,9 @@ select[aria-invalid="true"]:focus {
   font-family: var(--font-mono);
   font-size: 1.05rem;
   color: var(--text);
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
   overflow-wrap: anywhere;
 }
 

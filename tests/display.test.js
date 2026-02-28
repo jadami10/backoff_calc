@@ -20,7 +20,7 @@ test("formats durations with explicit unit scales", () => {
   assert.equal(formatDuration(5_400_000, "h"), `${formatNumber(1.5)} h`);
 });
 
-test("humanize mode uses compact mixed units", () => {
+test("human-readable mode uses compact mixed units", () => {
   assert.equal(formatDuration(500, "humanize"), "500ms");
   assert.equal(formatDuration(1000, "humanize"), "1s");
   assert.equal(formatDuration(61_000, "humanize"), "1m 1s");
@@ -29,7 +29,7 @@ test("humanize mode uses compact mixed units", () => {
   assert.equal(formatDuration(694_861_250, "humanize"), "1w 1d 1h 1m 1s 250ms");
 });
 
-test("humanize mode handles zero and fractional milliseconds", () => {
+test("human-readable mode handles zero and fractional milliseconds", () => {
   assert.equal(formatDuration(0, "humanize"), "0 ms");
   assert.equal(formatDuration(1234.56, "humanize"), "1s 234.56ms");
 });
@@ -52,5 +52,5 @@ test("unit labels match display mode", () => {
   assert.equal(unitLabel("s"), "s");
   assert.equal(unitLabel("min"), "min");
   assert.equal(unitLabel("h"), "h");
-  assert.equal(unitLabel("humanize"), "humanized");
+  assert.equal(unitLabel("humanize"), "human-readable");
 });
