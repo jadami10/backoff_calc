@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+    branches:
+      - dev
 
 concurrency:
   group: promote-main
@@ -33,6 +36,7 @@ jobs:
         run: npm test
 
   promote:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     needs: test
     runs-on: ubuntu-latest
 
@@ -42,49 +46,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Rebase onto main, verify, and promote
+      - name: Promote tested commit to main (fast-forward only)
         env:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main || true
 
-          max_attempts=3
-          attempt=1
-
-          while [ "$attempt" -le "$max_attempts" ]; do
-            echo "Promotion attempt ${attempt}/${max_attempts}"
-            git fetch origin main || true
-            git checkout -B promote-candidate "$SHA"
-
-            if git show-ref --verify --quiet refs/remotes/origin/main; then
-              if ! git rebase origin/main; then
-                git rebase --abort || true
-                echo "Automatic rebase onto main failed due to conflicts."
-                echo "Resolve on dev, then push dev again."
-                exit 1
-              fi
+          # Strict linear history: main must be an ancestor of the tested dev SHA.
+          if git show-ref --verify --quiet refs/remotes/origin/main; then
+            if ! git merge-base --is-ancestor origin/main "$SHA"; then
+              echo "Refusing to promote: origin/main is not an ancestor of tested dev commit."
+              echo "Rebase dev onto main locally, then push dev again."
+              exit 1
             fi
+          fi
 
-            npm ci
-            npm test
-
-            if git push origin HEAD:main; then
-              echo "Promotion succeeded."
-              exit 0
-            fi
-
-            echo "Push rejected (main advanced). Retrying..."
-            attempt=$((attempt + 1))
-          done
-
-          echo "Promotion failed after ${max_attempts} attempts."
-          exit 1
+          git push origin "$SHA:main"
