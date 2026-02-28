@@ -85,7 +85,7 @@ export function readConfigFromInputs(inputs) {
 }
 
 /**
- * @param {"exponential" | "linear"} strategy
+ * @param {"exponential" | "linear" | "fixed"} strategy
  * @param {{factorGroup: HTMLElement, incrementGroup: HTMLElement}} sections
  */
 export function setStrategyVisibility(strategy, sections) {

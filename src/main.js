@@ -180,7 +180,11 @@ function getSelectedChartMode() {
 function applySharedStateFromUrl() {
   const shareState = readShareStateFromUrl(window.location.href);
 
-  if (shareState.strategy === "exponential" || shareState.strategy === "linear") {
+  if (
+    shareState.strategy === "exponential" ||
+    shareState.strategy === "linear" ||
+    shareState.strategy === "fixed"
+  ) {
     const targetInput = strategyInputs.find((input) => input.value === shareState.strategy);
     if (targetInput != null) {
       targetInput.checked = true;

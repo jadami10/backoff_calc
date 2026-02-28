@@ -4,7 +4,7 @@ Static single-page app for tuning retry policies and visualizing backoff schedul
 
 ## Features
 
-- Exponential and linear backoff strategies
+- Exponential, linear, and fixed backoff strategies
 - Inputs for initial delay, max retries, max delay cap, factor, and increment
 - Live-updating chart with toggle for per-retry or cumulative delay
 - Retry schedule table with raw, capped, and cumulative delay

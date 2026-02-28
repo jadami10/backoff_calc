@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retry Backoff Calculator (Linear & Exponential)</title>
+    <title>Retry Backoff Calculator (Linear, Exponential & Fixed)</title>
     <meta
       name="description"
-      content="Interactive retry backoff calculator for linear and exponential strategies. Visualize per-retry and cumulative delays, caps, and total wait time."
+      content="Interactive retry backoff calculator for linear, exponential, and fixed strategies. Visualize per-retry and cumulative delays, caps, and total wait time."
     />
     <meta
       name="keywords"
-      content="retry backoff calculator, exponential backoff calculator, linear backoff calculator, retry delay visualization"
+      content="retry backoff calculator, exponential backoff calculator, linear backoff calculator, fixed backoff calculator, retry delay visualization"
     />
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <meta name="application-name" content="Retry Backoff Calculator" />
@@ -22,16 +22,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://retries.dev/" />
-    <meta property="og:title" content="Retry Backoff Calculator (Linear & Exponential)" />
+    <meta property="og:title" content="Retry Backoff Calculator (Linear, Exponential & Fixed)" />
     <meta
       property="og:description"
-      content="Calculate and visualize linear or exponential retry schedules with capped and cumulative delay totals."
+      content="Calculate and visualize linear, exponential, or fixed retry schedules with capped and cumulative delay totals."
     />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Retry Backoff Calculator (Linear & Exponential)" />
+    <meta name="twitter:title" content="Retry Backoff Calculator (Linear, Exponential & Fixed)" />
     <meta
       name="twitter:description"
-      content="Calculate and visualize linear or exponential retry schedules with capped and cumulative delay totals."
+      content="Calculate and visualize linear, exponential, or fixed retry schedules with capped and cumulative delay totals."
     />
     <script type="application/ld+json">
       {
@@ -41,7 +41,7 @@
         "url": "https://retries.dev/",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Any",
-        "description": "Calculate and visualize linear and exponential retry backoff delays with optional max delay caps.",
+        "description": "Calculate and visualize linear, exponential, and fixed retry backoff delays with optional max delay caps.",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -110,6 +110,9 @@
 
                 <input id="strategy-linear" type="radio" name="strategy" value="linear" />
                 <label for="strategy-linear" class="strategy-option">Linear</label>
+
+                <input id="strategy-fixed" type="radio" name="strategy" value="fixed" />
+                <label for="strategy-fixed" class="strategy-option">Fixed</label>
               </div>
             </fieldset>
 

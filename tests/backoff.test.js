@@ -52,6 +52,36 @@ test("linear schedule with increment", () => {
   assert.equal(schedule[3].cumulativeDelayMs, 5000);
 });
 
+test("fixed schedule uses the same delay on every retry", () => {
+  const schedule = generateSchedule({
+    strategy: "fixed",
+    initialDelayMs: 750,
+    maxRetries: 4,
+    maxDelayMs: null,
+  });
+
+  assert.deepEqual(
+    schedule.map((point) => point.delayMs),
+    [750, 750, 750, 750],
+  );
+  assert.equal(schedule[3].cumulativeDelayMs, 3000);
+});
+
+test("fixed schedule respects max delay cap", () => {
+  const schedule = generateSchedule({
+    strategy: "fixed",
+    initialDelayMs: 1200,
+    maxRetries: 3,
+    maxDelayMs: 1000,
+  });
+
+  assert.deepEqual(
+    schedule.map((point) => point.delayMs),
+    [1000, 1000, 1000],
+  );
+  assert.equal(schedule[2].cumulativeDelayMs, 3000);
+});
+
 test("maxRetries = 0 returns empty schedule and zero summary", () => {
   const schedule = generateSchedule({
     strategy: "linear",

@@ -63,3 +63,10 @@ test("share state round-trips strategy, display mode, and chart mode", () => {
   assert.equal(parsed.displayMode, original.displayMode);
   assert.equal(parsed.chartMode, original.chartMode);
 });
+
+test("readShareStateFromUrl accepts fixed strategy", () => {
+  const state = readShareStateFromUrl("https://example.com/?strategy=fixed&initialDelayMs=400");
+
+  assert.equal(state.strategy, "fixed");
+  assert.equal(state.initialDelayMs, "400");
+});

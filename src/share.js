@@ -2,7 +2,7 @@ import { isDisplayMode } from "./display.js";
 import { isChartMode } from "./chartMode.js";
 
 /**
- * @typedef {"exponential" | "linear"} BackoffStrategy
+ * @typedef {"exponential" | "linear" | "fixed"} BackoffStrategy
  */
 
 /**
@@ -33,7 +33,7 @@ const PARAM_KEYS = {
  * @returns {value is BackoffStrategy}
  */
 function isStrategy(value) {
-  return value === "exponential" || value === "linear";
+  return value === "exponential" || value === "linear" || value === "fixed";
 }
 
 /**

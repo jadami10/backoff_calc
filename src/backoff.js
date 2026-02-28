@@ -1,5 +1,5 @@
 /**
- * @typedef {"exponential" | "linear"} BackoffStrategy
+ * @typedef {"exponential" | "linear" | "fixed"} BackoffStrategy
  */
 
 const MAX_RETRIES_LIMIT = 1000;
@@ -54,8 +54,12 @@ export function validateConfig(config) {
     return [{ field: "config", message: "Configuration is required." }];
   }
 
-  if (config.strategy !== "exponential" && config.strategy !== "linear") {
-    errors.push({ field: "strategy", message: "Must be exponential or linear." });
+  if (
+    config.strategy !== "exponential" &&
+    config.strategy !== "linear" &&
+    config.strategy !== "fixed"
+  ) {
+    errors.push({ field: "strategy", message: "Must be exponential, linear, or fixed." });
   }
 
   if (!isFiniteNumber(config.initialDelayMs) || config.initialDelayMs < 0) {
@@ -113,8 +117,10 @@ export function generateSchedule(config) {
 
     if (config.strategy === "exponential") {
       rawDelayMs = config.initialDelayMs * config.factor ** (retry - 1);
-    } else {
+    } else if (config.strategy === "linear") {
       rawDelayMs = config.initialDelayMs + (retry - 1) * config.incrementMs;
+    } else {
+      rawDelayMs = config.initialDelayMs;
     }
 
     const delayMs =
