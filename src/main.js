@@ -3,6 +3,7 @@ import { createDelayChart } from "./chart.js";
 import { initThemeToggle } from "./theme.js";
 import {
   clearScheduleTable,
+  enforceNonNegativeIntegerInput,
   readConfigFromForm,
   renderScheduleTable,
   renderSummary,
@@ -25,13 +26,24 @@ function debounce(fn, waitMs) {
 }
 
 const form = document.querySelector("#backoff-form");
-const strategySelect = document.querySelector("#strategy");
+const strategyInputs = Array.from(
+  document.querySelectorAll('input[name="strategy"]'),
+);
 const factorGroup = document.querySelector("#factor-group");
 const incrementGroup = document.querySelector("#increment-group");
 const themeToggle = document.querySelector("#theme-toggle");
-const errorBox = document.querySelector("#error-box");
 const scheduleBody = document.querySelector("#schedule-body");
 const chartCanvas = document.querySelector("#delay-chart");
+const initialDelayInput = document.querySelector("#initialDelayMs");
+const maxRetriesInput = document.querySelector("#maxRetries");
+const maxDelayInput = document.querySelector("#maxDelayMs");
+const factorInput = document.querySelector("#factor");
+const incrementInput = document.querySelector("#incrementMs");
+const initialDelayError = document.querySelector("#error-initialDelayMs");
+const maxRetriesError = document.querySelector("#error-maxRetries");
+const maxDelayError = document.querySelector("#error-maxDelayMs");
+const factorError = document.querySelector("#error-factor");
+const incrementError = document.querySelector("#error-incrementMs");
 
 const summaryElements = {
   totalRetries: document.querySelector("#summary-total-retries"),
@@ -41,13 +53,23 @@ const summaryElements = {
 
 if (
   !(form instanceof HTMLFormElement) ||
-  !(strategySelect instanceof HTMLSelectElement) ||
+  strategyInputs.length === 0 ||
+  strategyInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   !(factorGroup instanceof HTMLElement) ||
   !(incrementGroup instanceof HTMLElement) ||
   !(themeToggle instanceof HTMLButtonElement) ||
-  !(errorBox instanceof HTMLElement) ||
   !(scheduleBody instanceof HTMLElement) ||
   !(chartCanvas instanceof HTMLCanvasElement) ||
+  !(initialDelayInput instanceof HTMLInputElement) ||
+  !(maxRetriesInput instanceof HTMLInputElement) ||
+  !(maxDelayInput instanceof HTMLInputElement) ||
+  !(factorInput instanceof HTMLInputElement) ||
+  !(incrementInput instanceof HTMLInputElement) ||
+  !(initialDelayError instanceof HTMLElement) ||
+  !(maxRetriesError instanceof HTMLElement) ||
+  !(maxDelayError instanceof HTMLElement) ||
+  !(factorError instanceof HTMLElement) ||
+  !(incrementError instanceof HTMLElement) ||
   !(summaryElements.totalRetries instanceof HTMLElement) ||
   !(summaryElements.finalDelayMs instanceof HTMLElement) ||
   !(summaryElements.totalDelayMs instanceof HTMLElement)
@@ -56,6 +78,7 @@ if (
 }
 
 const chart = createDelayChart(chartCanvas);
+enforceNonNegativeIntegerInput(maxRetriesInput);
 
 function readCssVariable(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -79,7 +102,8 @@ initThemeToggle(themeToggle, {
 });
 
 function updateStrategyFields() {
-  setStrategyVisibility(strategySelect.value, { factorGroup, incrementGroup });
+  const selectedStrategy = strategyInputs.find((input) => input.checked)?.value ?? "";
+  setStrategyVisibility(selectedStrategy, { factorGroup, incrementGroup });
 }
 
 function recompute() {
@@ -87,7 +111,22 @@ function recompute() {
   const config = readConfigFromForm(form);
   const errors = validateConfig(config);
 
-  renderValidation(errors, errorBox);
+  renderValidation(errors, {
+    inputs: {
+      initialDelayMs: initialDelayInput,
+      maxRetries: maxRetriesInput,
+      maxDelayMs: maxDelayInput,
+      factor: factorInput,
+      incrementMs: incrementInput,
+    },
+    messages: {
+      initialDelayMs: initialDelayError,
+      maxRetries: maxRetriesError,
+      maxDelayMs: maxDelayError,
+      factor: factorError,
+      incrementMs: incrementError,
+    },
+  });
   if (errors.length > 0) {
     chart.clear();
     clearScheduleTable(scheduleBody, "Fix validation errors to see schedule.");

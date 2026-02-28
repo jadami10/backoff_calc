@@ -5,6 +5,11 @@ function toChartData(points) {
   };
 }
 
+const compactNumberFormatter = new Intl.NumberFormat(undefined, {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 /**
  * @typedef {object} ChartThemeTokens
  * @property {string} lineColor
@@ -64,6 +69,7 @@ export function createDelayChart(canvas) {
         x: {
           ticks: {
             color: "#3f3f46",
+            maxTicksLimit: 10,
           },
           grid: {
             color: "rgba(39, 39, 42, 0.14)",
@@ -78,6 +84,9 @@ export function createDelayChart(canvas) {
           beginAtZero: true,
           ticks: {
             color: "#3f3f46",
+            callback(value) {
+              return compactNumberFormatter.format(Number(value));
+            },
           },
           grid: {
             color: "rgba(39, 39, 42, 0.14)",

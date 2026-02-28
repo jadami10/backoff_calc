@@ -16,6 +16,48 @@ function formatMs(value) {
   return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ms`;
 }
 
+function isDigitKey(key) {
+  return key.length === 1 && key >= "0" && key <= "9";
+}
+
+/**
+ * Prevent non-integer input for a numeric field (typing and paste).
+ * @param {HTMLInputElement} input
+ */
+export function enforceNonNegativeIntegerInput(input) {
+  input.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    const allowedControlKeys = new Set([
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+      "Tab",
+      "Enter",
+    ]);
+
+    if (allowedControlKeys.has(event.key)) {
+      return;
+    }
+
+    if (!isDigitKey(event.key)) {
+      event.preventDefault();
+    }
+  });
+
+  input.addEventListener("paste", (event) => {
+    const pastedText = event.clipboardData?.getData("text") ?? "";
+    if (!/^\d+$/.test(pastedText)) {
+      event.preventDefault();
+    }
+  });
+}
+
 /**
  * @param {HTMLFormElement} form
  */
@@ -44,24 +86,64 @@ export function setStrategyVisibility(strategy, sections) {
 
 /**
  * @param {string[]} errors
- * @param {HTMLElement} container
+ * @param {{
+ *   inputs: {
+ *     initialDelayMs: HTMLInputElement,
+ *     maxRetries: HTMLInputElement,
+ *     maxDelayMs: HTMLInputElement,
+ *     factor: HTMLInputElement,
+ *     incrementMs: HTMLInputElement
+ *   },
+ *   messages: {
+ *     initialDelayMs: HTMLElement,
+ *     maxRetries: HTMLElement,
+ *     maxDelayMs: HTMLElement,
+ *     factor: HTMLElement,
+ *     incrementMs: HTMLElement
+ *   }
+ * }} targets
  */
-export function renderValidation(errors, container) {
-  if (!errors.length) {
-    container.hidden = true;
-    container.textContent = "";
-    return;
-  }
+export function renderValidation(errors, targets) {
+  const fieldErrors = {
+    initialDelayMs: "",
+    maxRetries: "",
+    maxDelayMs: "",
+    factor: "",
+    incrementMs: "",
+  };
 
-  const list = document.createElement("ul");
   for (const error of errors) {
-    const item = document.createElement("li");
-    item.textContent = error;
-    list.append(item);
+    if (error.includes("Initial delay")) {
+      fieldErrors.initialDelayMs = error;
+      continue;
+    }
+    if (error.includes("Max retries")) {
+      fieldErrors.maxRetries = error;
+      continue;
+    }
+    if (error.includes("Max delay cap")) {
+      fieldErrors.maxDelayMs = error;
+      continue;
+    }
+    if (error.includes("factor")) {
+      fieldErrors.factor = error;
+      continue;
+    }
+    if (error.includes("increment")) {
+      fieldErrors.incrementMs = error;
+    }
   }
 
-  container.replaceChildren(list);
-  container.hidden = false;
+  for (const [fieldName, input] of Object.entries(targets.inputs)) {
+    const message = fieldErrors[fieldName];
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  }
+
+  targets.messages.initialDelayMs.textContent = fieldErrors.initialDelayMs;
+  targets.messages.maxRetries.textContent = fieldErrors.maxRetries;
+  targets.messages.maxDelayMs.textContent = fieldErrors.maxDelayMs;
+  targets.messages.factor.textContent = fieldErrors.factor;
+  targets.messages.incrementMs.textContent = fieldErrors.incrementMs;
 }
 
 /**
@@ -125,4 +207,3 @@ export function renderSummary(summary, summaryElements) {
   summaryElements.finalDelayMs.textContent = formatMs(summary.finalDelayMs);
   summaryElements.totalDelayMs.textContent = formatMs(summary.totalDelayMs);
 }
-
