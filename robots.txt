@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://retries.dev/sitemap.xml
