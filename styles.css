@@ -421,6 +421,54 @@ select[aria-invalid="true"]:focus {
   font-size: 0.95rem;
 }
 
+.chart-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.chart-mode-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.chart-mode-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, auto));
+  gap: 6px;
+}
+
+.chart-mode-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chart-mode-option {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: border-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
+}
+
+.chart-mode-toggle input[type="radio"]:checked + .chart-mode-option {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+  color: var(--text);
+}
+
+.chart-mode-toggle input[type="radio"]:focus-visible + .chart-mode-option {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -495,6 +543,10 @@ tbody tr:last-child td {
     height: 280px;
   }
 
+  .chart-toolbar {
+    justify-content: flex-start;
+  }
+
   table {
     min-width: 520px;
   }
@@ -518,5 +570,13 @@ tbody tr:last-child td {
 
   table {
     min-width: 460px;
+  }
+
+  .chart-mode-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-mode-option {
+    text-align: center;
   }
 }

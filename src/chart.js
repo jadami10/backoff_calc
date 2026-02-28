@@ -4,6 +4,7 @@ import {
   resolveDisplayMode,
   unitLabel,
 } from "./display.js";
+import { DEFAULT_CHART_MODE, resolveChartMode } from "./chartMode.js";
 
 const HOVER_GUIDE_PLUGIN_ID = "hoverGuide";
 
@@ -29,11 +30,26 @@ const hoverGuidePlugin = {
   },
 };
 
-function toChartData(points) {
+/**
+ * @param {Array<{retry:number,delayMs:number,cumulativeDelayMs:number}>} points
+ * @param {import("./chartMode.js").ChartMode} chartMode
+ */
+function toChartData(points, chartMode) {
   return {
     labels: points.map((point) => point.retry),
-    values: points.map((point) => point.delayMs),
+    values: points.map((point) =>
+      chartMode === "cumulative" ? point.cumulativeDelayMs : point.delayMs,
+    ),
   };
+}
+
+/**
+ * @param {import("./display.js").DisplayMode} displayMode
+ * @param {import("./chartMode.js").ChartMode} chartMode
+ */
+function yAxisTitle(displayMode, chartMode) {
+  const prefix = chartMode === "cumulative" ? "Cumulative Delay" : "Delay";
+  return `${prefix} (${unitLabel(displayMode)})`;
 }
 
 /**
@@ -57,6 +73,7 @@ export function createDelayChart(canvas) {
   }
 
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
+  let currentChartMode = DEFAULT_CHART_MODE;
   let activePointIndex = null;
   let isPointerInsideChart = false;
 
@@ -196,7 +213,7 @@ export function createDelayChart(canvas) {
           },
           title: {
             display: true,
-            text: `Delay (${unitLabel(currentDisplayMode)})`,
+            text: yAxisTitle(currentDisplayMode, currentChartMode),
             color: "#3f3f46",
           },
         },
@@ -209,7 +226,15 @@ export function createDelayChart(canvas) {
    */
   function applyDisplayMode(displayMode) {
     currentDisplayMode = resolveDisplayMode(displayMode);
-    chart.options.scales.y.title.text = `Delay (${unitLabel(currentDisplayMode)})`;
+    chart.options.scales.y.title.text = yAxisTitle(currentDisplayMode, currentChartMode);
+  }
+
+  /**
+   * @param {import("./chartMode.js").ChartMode} chartMode
+   */
+  function applyChartMode(chartMode) {
+    currentChartMode = resolveChartMode(chartMode);
+    chart.options.scales.y.title.text = yAxisTitle(currentDisplayMode, currentChartMode);
   }
 
   /**
@@ -255,9 +280,10 @@ export function createDelayChart(canvas) {
   canvas.addEventListener("touchcancel", handlePointerLeave, { passive: true });
 
   return {
-    update(points, displayMode = currentDisplayMode) {
+    update(points, displayMode = currentDisplayMode, chartMode = currentChartMode) {
       applyDisplayMode(displayMode);
-      const chartData = toChartData(points);
+      applyChartMode(chartMode);
+      const chartData = toChartData(points, currentChartMode);
       chart.data.labels = chartData.labels;
       chart.data.datasets[0].data = chartData.values;
       if (chartData.values.length === 0) {
@@ -269,8 +295,9 @@ export function createDelayChart(canvas) {
       }
       chart.update();
     },
-    clear(displayMode = currentDisplayMode) {
+    clear(displayMode = currentDisplayMode, chartMode = currentChartMode) {
       applyDisplayMode(displayMode);
+      applyChartMode(chartMode);
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
       clearActivePoint();

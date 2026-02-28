@@ -1,6 +1,7 @@
 import { generateSchedule, summarizeSchedule, validateConfig } from "./backoff.js";
 import { createDelayChart } from "./chart.js";
 import { resolveDisplayMode } from "./display.js";
+import { resolveChartMode } from "./chartMode.js";
 import { createShareUrl, readShareStateFromUrl } from "./share.js";
 import { initThemeToggle } from "./theme.js";
 import {
@@ -29,6 +30,9 @@ function debounce(fn, waitMs) {
 const controls = document.querySelector("#backoff-controls");
 const strategyInputs = Array.from(
   document.querySelectorAll('input[name="strategy"]'),
+);
+const chartModeInputs = Array.from(
+  document.querySelectorAll('input[name="chartMode"]'),
 );
 const factorGroup = document.querySelector("#factor-group");
 const incrementGroup = document.querySelector("#increment-group");
@@ -63,6 +67,8 @@ if (
   !(controls instanceof HTMLElement) ||
   strategyInputs.length === 0 ||
   strategyInputs.some((input) => !(input instanceof HTMLInputElement)) ||
+  chartModeInputs.length === 0 ||
+  chartModeInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   !(factorGroup instanceof HTMLElement) ||
   !(incrementGroup instanceof HTMLElement) ||
   !(shareLinkButton instanceof HTMLButtonElement) ||
@@ -129,6 +135,11 @@ function getSelectedStrategy() {
   return strategyInputs.find((input) => input.checked)?.value ?? "";
 }
 
+function getSelectedChartMode() {
+  const selectedMode = chartModeInputs.find((input) => input.checked)?.value ?? "";
+  return resolveChartMode(selectedMode);
+}
+
 function applySharedStateFromUrl() {
   const shareState = readShareStateFromUrl(window.location.href);
 
@@ -156,6 +167,12 @@ function applySharedStateFromUrl() {
   }
   if (typeof shareState.displayMode === "string") {
     displayModeSelect.value = shareState.displayMode;
+  }
+  if (typeof shareState.chartMode === "string") {
+    const targetInput = chartModeInputs.find((input) => input.value === shareState.chartMode);
+    if (targetInput != null) {
+      targetInput.checked = true;
+    }
   }
 }
 
@@ -255,6 +272,7 @@ function renderMaxRetriesHint(config, errors) {
 function recompute() {
   updateStrategyFields();
   const displayMode = resolveDisplayMode(displayModeSelect.value);
+  const chartMode = getSelectedChartMode();
 
   const config = readConfigFromInputs(configInputs);
   const errors = validateConfig(config);
@@ -288,7 +306,7 @@ function recompute() {
     cappedDelay: cappedDelayHeader,
     cumulativeDelay: cumulativeDelayHeader,
   });
-  chart.update(points, displayMode);
+  chart.update(points, displayMode, chartMode);
   renderScheduleTable(points, scheduleBody, displayMode);
   renderSummary(summary, summaryElements, displayMode);
 }
@@ -296,6 +314,7 @@ function recompute() {
 const debouncedRecompute = debounce(recompute, 100);
 const recomputeInputs = [
   ...strategyInputs,
+  ...chartModeInputs,
   initialDelayInput,
   maxRetriesInput,
   maxDelayInput,
@@ -317,6 +336,7 @@ shareLinkButton.addEventListener("click", async () => {
     factor: factorInput.value,
     incrementMs: incrementInput.value,
     displayMode: resolveDisplayMode(displayModeSelect.value),
+    chartMode: getSelectedChartMode(),
   });
 
   try {

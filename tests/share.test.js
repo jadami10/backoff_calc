@@ -12,6 +12,7 @@ test("createShareUrl encodes current configuration into query params", () => {
     factor: "2",
     incrementMs: "400",
     displayMode: "humanize",
+    chartMode: "cumulative",
   });
 
   const parsed = new URL(url);
@@ -24,20 +25,22 @@ test("createShareUrl encodes current configuration into query params", () => {
   assert.equal(parsed.searchParams.get("factor"), "2");
   assert.equal(parsed.searchParams.get("incrementMs"), "400");
   assert.equal(parsed.searchParams.get("displayMode"), "humanize");
+  assert.equal(parsed.searchParams.get("chartMode"), "cumulative");
 });
 
 test("readShareStateFromUrl accepts known params and ignores invalid mode values", () => {
   const state = readShareStateFromUrl(
-    "https://example.com/?strategy=unknown&displayMode=days&maxRetries=5&factor=1.5",
+    "https://example.com/?strategy=unknown&displayMode=days&chartMode=total&maxRetries=5&factor=1.5",
   );
 
   assert.equal(state.strategy, undefined);
   assert.equal(state.displayMode, undefined);
+  assert.equal(state.chartMode, undefined);
   assert.equal(state.maxRetries, "5");
   assert.equal(state.factor, "1.5");
 });
 
-test("share state round-trips strategy and display mode", () => {
+test("share state round-trips strategy, display mode, and chart mode", () => {
   const original = {
     strategy: "exponential",
     initialDelayMs: "500",
@@ -46,6 +49,7 @@ test("share state round-trips strategy and display mode", () => {
     factor: "2",
     incrementMs: "500",
     displayMode: "ms",
+    chartMode: "delay",
   };
   const url = createShareUrl("https://example.com/", original);
   const parsed = readShareStateFromUrl(url);
@@ -57,4 +61,5 @@ test("share state round-trips strategy and display mode", () => {
   assert.equal(parsed.factor, original.factor);
   assert.equal(parsed.incrementMs, original.incrementMs);
   assert.equal(parsed.displayMode, original.displayMode);
+  assert.equal(parsed.chartMode, original.chartMode);
 });

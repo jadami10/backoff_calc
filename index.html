@@ -143,6 +143,30 @@
         </section>
 
         <section class="content-block chart-panel">
+          <div class="chart-toolbar">
+            <fieldset class="chart-mode-field" aria-label="Chart delay mode">
+              <div class="chart-mode-toggle">
+                <input
+                  id="chart-mode-delay"
+                  type="radio"
+                  name="chartMode"
+                  value="delay"
+                  checked
+                />
+                <label for="chart-mode-delay" class="chart-mode-option">Per Retry Delay</label>
+
+                <input
+                  id="chart-mode-cumulative"
+                  type="radio"
+                  name="chartMode"
+                  value="cumulative"
+                />
+                <label for="chart-mode-cumulative" class="chart-mode-option">
+                  Cumulative Delay
+                </label>
+              </div>
+            </fieldset>
+          </div>
           <div class="chart-frame">
             <canvas id="delay-chart" aria-label="Retry delay chart" role="img"></canvas>
           </div>
