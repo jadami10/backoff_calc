@@ -356,16 +356,15 @@ select:focus {
 }
 
 .field-note {
-  display: block;
+  display: none;
   grid-column: 1 / -1;
-  min-height: 0.85em;
   font-size: 0.76rem;
   color: var(--muted);
   line-height: 1.1;
 }
 
-.field-note:empty {
-  visibility: hidden;
+.field-note:not(:empty) {
+  display: block;
 }
 
 input[aria-invalid="true"],

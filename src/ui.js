@@ -35,6 +35,8 @@ export function enforceNonNegativeIntegerInput(input) {
       "Delete",
       "ArrowLeft",
       "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
       "Home",
       "End",
       "Tab",
