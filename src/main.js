@@ -4,14 +4,12 @@ import { resolveDisplayMode } from "./display.js";
 import { createShareUrl, readShareStateFromUrl } from "./share.js";
 import { initThemeToggle } from "./theme.js";
 import {
-  clearScheduleTable,
   enforceNonNegativeIntegerInput,
   readConfigFromInputs,
   renderDelayTableHeaders,
   renderScheduleTable,
   renderSummary,
   renderValidation,
-  resetSummary,
   setStrategyVisibility,
 } from "./ui.js";
 
@@ -236,11 +234,6 @@ function updateStrategyFields() {
 function recompute() {
   updateStrategyFields();
   const displayMode = resolveDisplayMode(displayModeSelect.value);
-  renderDelayTableHeaders(displayMode, {
-    rawDelay: rawDelayHeader,
-    cappedDelay: cappedDelayHeader,
-    cumulativeDelay: cumulativeDelayHeader,
-  });
 
   const config = readConfigFromInputs(configInputs);
   const errors = validateConfig(config);
@@ -262,15 +255,17 @@ function recompute() {
     },
   });
   if (errors.length > 0) {
-    chart.clear(displayMode);
-    clearScheduleTable(scheduleBody, "Fix validation errors to see schedule.");
-    resetSummary(summaryElements);
     return;
   }
 
   const points = generateSchedule(config);
   const summary = summarizeSchedule(points);
 
+  renderDelayTableHeaders(displayMode, {
+    rawDelay: rawDelayHeader,
+    cappedDelay: cappedDelayHeader,
+    cumulativeDelay: cumulativeDelayHeader,
+  });
   chart.update(points, displayMode);
   renderScheduleTable(points, scheduleBody, displayMode);
   renderSummary(summary, summaryElements, displayMode);
