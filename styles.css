@@ -700,10 +700,12 @@ select[aria-invalid="true"]:focus {
   max-width: 100%;
   margin: 0 auto 28px;
   display: flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-end;
 }
 
-.privacy-button {
+.footer-link {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 12px;
@@ -711,15 +713,32 @@ select[aria-invalid="true"]:focus {
   font-size: 0.84rem;
   color: var(--muted);
   background: var(--surface);
+  text-decoration: none;
+  line-height: 1;
+}
+
+.privacy-button {
   cursor: pointer;
 }
 
-.privacy-button:hover {
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.github-logo {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.footer-link:hover {
   border-color: var(--border-strong);
   color: var(--text);
 }
 
-.privacy-button:focus-visible {
+.footer-link:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
