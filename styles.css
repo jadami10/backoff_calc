@@ -1,18 +1,53 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
-
 :root {
-  --bg: #f7f4ee;
-  --bg-accent: #e8f5ef;
-  --panel: #fffdf8;
-  --text: #1f2d2a;
-  --muted: #5f6e69;
-  --border: #d8d7d1;
-  --line: #0f766e;
-  --line-soft: rgba(15, 118, 110, 0.13);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #111111;
+  --muted: #525252;
+  --border: #d4d4d8;
+  --border-strong: #a1a1aa;
+  --focus-ring: rgba(17, 17, 17, 0.2);
+  --shadow: none;
+
+  --table-head-bg: #f5f5f5;
   --error: #b42318;
-  --error-soft: #fef3f2;
-  --shadow: 0 14px 36px rgba(31, 45, 42, 0.08);
-  --radius: 14px;
+  --error-bg: #fff4f4;
+  --error-border: #fecaca;
+
+  --chart-line: #27272a;
+  --chart-fill: rgba(39, 39, 42, 0.12);
+  --chart-axis: #3f3f46;
+  --chart-grid: rgba(39, 39, 42, 0.14);
+  --chart-tooltip-bg: #111111;
+  --chart-tooltip-text: #f5f5f5;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f0f14;
+  --surface: #0f0f14;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: #5b4aa1;
+  --border-strong: #7f6bd0;
+  --focus-ring: rgba(91, 74, 161, 0.5);
+  --shadow: none;
+
+  --table-head-bg: rgba(91, 74, 161, 0.18);
+  --error: #ffb4ac;
+  --error-bg: rgba(180, 35, 24, 0.15);
+  --error-border: rgba(255, 180, 172, 0.4);
+
+  --chart-line: #8f7be3;
+  --chart-fill: rgba(143, 123, 227, 0.2);
+  --chart-axis: #ded9f3;
+  --chart-grid: rgba(91, 74, 161, 0.35);
+  --chart-tooltip-bg: #221c39;
+  --chart-tooltip-text: #f4f4f5;
 }
 
 *,
@@ -24,19 +59,27 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "IBM Plex Sans", sans-serif;
+  font-family: var(--font-sans);
   color: var(--text);
-  background:
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.2), transparent 45%),
-    radial-gradient(circle at bottom left, rgba(236, 219, 181, 0.45), transparent 42%),
-    linear-gradient(180deg, var(--bg-accent) 0%, var(--bg) 70%);
+  background: var(--bg);
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 .app-shell {
   width: min(1080px, 95vw);
   margin: 32px auto 48px;
+}
+
+.app-panel {
   display: grid;
-  gap: 18px;
+  gap: 28px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .app-header h1 {
@@ -51,17 +94,42 @@ body {
   max-width: 680px;
 }
 
-.panel {
+.theme-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--panel);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
 }
 
-.panel h2 {
-  margin: 0 0 14px;
-  font-size: 1.15rem;
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 24px;
 }
 
 .controls-grid {
@@ -88,20 +156,20 @@ select {
   padding: 10px 11px;
   font: inherit;
   color: var(--text);
-  background: #ffffff;
+  background: var(--surface);
 }
 
 input:focus,
 select:focus {
-  outline: 2px solid rgba(15, 118, 110, 0.23);
-  outline-offset: 1px;
-  border-color: var(--line);
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .error-box {
   margin-top: 14px;
-  background: var(--error-soft);
-  border: 1px solid #fecdca;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   color: var(--error);
   border-radius: 10px;
   padding: 10px 12px;
@@ -115,14 +183,7 @@ select:focus {
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.summary-card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  background: #fff;
+  gap: 18px;
 }
 
 .summary-card h3 {
@@ -134,23 +195,17 @@ select:focus {
 
 .summary-card p {
   margin: 12px 0 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 1.05rem;
   color: var(--text);
 }
 
 .chart-frame {
   height: 320px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
 }
 
 .table-wrap {
   overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 12px;
 }
 
 table {
@@ -160,7 +215,7 @@ table {
 }
 
 thead tr {
-  background: var(--line-soft);
+  background: var(--table-head-bg);
 }
 
 th,
@@ -191,4 +246,3 @@ tbody tr:last-child td {
     height: 280px;
   }
 }
-

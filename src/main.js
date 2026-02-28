@@ -1,5 +1,6 @@
 import { generateSchedule, summarizeSchedule, validateConfig } from "./backoff.js";
 import { createDelayChart } from "./chart.js";
+import { initThemeToggle } from "./theme.js";
 import {
   clearScheduleTable,
   readConfigFromForm,
@@ -27,6 +28,7 @@ const form = document.querySelector("#backoff-form");
 const strategySelect = document.querySelector("#strategy");
 const factorGroup = document.querySelector("#factor-group");
 const incrementGroup = document.querySelector("#increment-group");
+const themeToggle = document.querySelector("#theme-toggle");
 const errorBox = document.querySelector("#error-box");
 const scheduleBody = document.querySelector("#schedule-body");
 const chartCanvas = document.querySelector("#delay-chart");
@@ -42,6 +44,7 @@ if (
   !(strategySelect instanceof HTMLSelectElement) ||
   !(factorGroup instanceof HTMLElement) ||
   !(incrementGroup instanceof HTMLElement) ||
+  !(themeToggle instanceof HTMLButtonElement) ||
   !(errorBox instanceof HTMLElement) ||
   !(scheduleBody instanceof HTMLElement) ||
   !(chartCanvas instanceof HTMLCanvasElement) ||
@@ -53,6 +56,27 @@ if (
 }
 
 const chart = createDelayChart(chartCanvas);
+
+function readCssVariable(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function getChartThemeTokens() {
+  return {
+    lineColor: readCssVariable("--chart-line"),
+    fillColor: readCssVariable("--chart-fill"),
+    axisTextColor: readCssVariable("--chart-axis"),
+    gridColor: readCssVariable("--chart-grid"),
+    tooltipBackgroundColor: readCssVariable("--chart-tooltip-bg"),
+    tooltipTextColor: readCssVariable("--chart-tooltip-text"),
+  };
+}
+
+initThemeToggle(themeToggle, {
+  onThemeChange() {
+    chart.setTheme(getChartThemeTokens());
+  },
+});
 
 function updateStrategyFields() {
   setStrategyVisibility(strategySelect.value, { factorGroup, incrementGroup });
@@ -86,4 +110,3 @@ form.addEventListener("change", debouncedRecompute);
 
 updateStrategyFields();
 recompute();
-
