@@ -2,6 +2,8 @@
  * @typedef {"exponential" | "linear"} BackoffStrategy
  */
 
+const MAX_RETRIES_LIMIT = 1000;
+
 /**
  * @typedef {"config" | "strategy" | "initialDelayMs" | "maxRetries" | "maxDelayMs" | "factor" | "incrementMs"} ValidationErrorField
  */
@@ -60,8 +62,15 @@ export function validateConfig(config) {
     errors.push({ field: "initialDelayMs", message: "Must be >= 0." });
   }
 
-  if (!Number.isInteger(config.maxRetries) || config.maxRetries < 0) {
-    errors.push({ field: "maxRetries", message: "Must be an integer >= 0." });
+  if (
+    !Number.isInteger(config.maxRetries) ||
+    config.maxRetries < 0 ||
+    config.maxRetries > MAX_RETRIES_LIMIT
+  ) {
+    errors.push({
+      field: "maxRetries",
+      message: `Must be an integer between 0 and ${MAX_RETRIES_LIMIT}.`,
+    });
   }
 
   if (

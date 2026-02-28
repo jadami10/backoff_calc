@@ -344,14 +344,27 @@ select:focus {
   font-size: 0.76rem;
   color: var(--error);
   line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
   max-width: 26ch;
   justify-self: end;
+  text-align: right;
 }
 
 .field-error:empty {
+  visibility: hidden;
+}
+
+.field-note {
+  display: block;
+  grid-column: 1 / -1;
+  min-height: 0.85em;
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.1;
+}
+
+.field-note:empty {
   visibility: hidden;
 }
 

@@ -59,11 +59,19 @@ function formatHumanized(valueMs) {
 
   const sign = valueMs < 0 ? "-" : "";
   const totalCentiMs = Math.round(Math.abs(valueMs) * 100);
+  const centiMsPerWeek = 7 * 24 * 3600 * 1000 * 100;
+  const centiMsPerDay = 24 * 3600 * 1000 * 100;
   const centiMsPerHour = 3600 * 1000 * 100;
   const centiMsPerMinute = 60 * 1000 * 100;
   const centiMsPerSecond = 1000 * 100;
 
   let remaining = totalCentiMs;
+
+  const weeks = Math.floor(remaining / centiMsPerWeek);
+  remaining -= weeks * centiMsPerWeek;
+
+  const days = Math.floor(remaining / centiMsPerDay);
+  remaining -= days * centiMsPerDay;
 
   const hours = Math.floor(remaining / centiMsPerHour);
   remaining -= hours * centiMsPerHour;
@@ -77,6 +85,12 @@ function formatHumanized(valueMs) {
   const millis = remaining / 100;
   const parts = [];
 
+  if (weeks > 0) {
+    parts.push(`${weeks.toLocaleString()}w`);
+  }
+  if (days > 0) {
+    parts.push(`${days.toLocaleString()}d`);
+  }
   if (hours > 0) {
     parts.push(`${hours.toLocaleString()}h`);
   }

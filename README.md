@@ -8,7 +8,7 @@ Static single-page app for tuning retry policies and visualizing backoff schedul
 - Inputs for initial delay, max retries, max delay cap, factor, and increment
 - Live-updating chart of retry delay
 - Retry schedule table with raw, capped, and cumulative delay
-- Selectable delay display scale (ms/s/min/h) plus humanized duration output
+- Selectable delay display scale (ms/s/min/h) plus humanized duration output (w/d/h/m/s/ms)
 - Inline validation that disables stale outputs on invalid input
 
 ## Local Development

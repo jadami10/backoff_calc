@@ -87,14 +87,16 @@
               <input
                 id="maxRetries"
                 name="maxRetries"
-                aria-describedby="error-maxRetries"
+                aria-describedby="error-maxRetries hint-maxRetries"
                 type="number"
                 min="0"
+                max="1000"
                 step="1"
                 inputmode="numeric"
                 value="5"
               />
               <span id="error-maxRetries" class="field-error" aria-live="polite"></span>
+              <span id="hint-maxRetries" class="field-note" aria-live="polite"></span>
             </label>
 
             <label class="field">

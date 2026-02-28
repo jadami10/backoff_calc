@@ -69,6 +69,42 @@ test("maxRetries = 0 returns empty schedule and zero summary", () => {
   });
 });
 
+test("maxRetries upper bound accepts 1000", () => {
+  const errors = validateConfig({
+    strategy: "linear",
+    initialDelayMs: 100,
+    maxRetries: 1000,
+    maxDelayMs: null,
+    incrementMs: 100,
+  });
+
+  assert.equal(errors.length, 0);
+});
+
+test("validation rejects maxRetries above 1000", () => {
+  const errors = validateConfig({
+    strategy: "linear",
+    initialDelayMs: 100,
+    maxRetries: 1001,
+    maxDelayMs: null,
+    incrementMs: 100,
+  });
+
+  assert.ok(errors.some((error) => error.field === "maxRetries"));
+  assert.ok(errors.some((error) => error.message === "Must be an integer between 0 and 1000."));
+  assert.throws(
+    () =>
+      generateSchedule({
+        strategy: "linear",
+        initialDelayMs: 100,
+        maxRetries: 1001,
+        maxDelayMs: null,
+        incrementMs: 100,
+      }),
+    /Invalid configuration/,
+  );
+});
+
 test("validation rejects invalid values", () => {
   const exponentialErrors = validateConfig({
     strategy: "exponential",

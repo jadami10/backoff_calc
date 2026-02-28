@@ -25,6 +25,8 @@ test("humanize mode uses compact mixed units", () => {
   assert.equal(formatDuration(1000, "humanize"), "1s");
   assert.equal(formatDuration(61_000, "humanize"), "1m 1s");
   assert.equal(formatDuration(3_661_250, "humanize"), "1h 1m 1s 250ms");
+  assert.equal(formatDuration(86_400_000, "humanize"), "1d");
+  assert.equal(formatDuration(694_861_250, "humanize"), "1w 1d 1h 1m 1s 250ms");
 });
 
 test("humanize mode handles zero and fractional milliseconds", () => {
