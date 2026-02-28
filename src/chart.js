@@ -7,6 +7,25 @@ import {
 import { DEFAULT_CHART_MODE, resolveChartMode } from "./chartMode.js";
 
 const HOVER_GUIDE_PLUGIN_ID = "hoverGuide";
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const SUBTLE_DATA_ANIMATION = {
+  duration: 440,
+  easing: "easeOutCubic",
+};
+
+function prefersReducedMotion() {
+  if (typeof globalThis.matchMedia !== "function") {
+    return false;
+  }
+  return globalThis.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+function resolveAnimationOptions() {
+  if (prefersReducedMotion()) {
+    return false;
+  }
+  return { ...SUBTLE_DATA_ANIMATION };
+}
 
 const hoverGuidePlugin = {
   id: HOVER_GUIDE_PLUGIN_ID,
@@ -158,7 +177,7 @@ export function createDelayChart(canvas) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
+      animation: resolveAnimationOptions(),
       interaction: {
         mode: "index",
         axis: "x",
@@ -257,7 +276,7 @@ export function createDelayChart(canvas) {
     chart.options.scales.y.title.color = tokens.axisTextColor;
     chart.options.plugins[HOVER_GUIDE_PLUGIN_ID].color = tokens.hoverGuideColor;
 
-    chart.update();
+    chart.update("none");
   }
 
   function handlePointerEnterOrMove(event) {
@@ -283,6 +302,7 @@ export function createDelayChart(canvas) {
     update(points, displayMode = currentDisplayMode, chartMode = currentChartMode) {
       applyDisplayMode(displayMode);
       applyChartMode(chartMode);
+      chart.options.animation = resolveAnimationOptions();
       const chartData = toChartData(points, currentChartMode);
       chart.data.labels = chartData.labels;
       chart.data.datasets[0].data = chartData.values;
@@ -298,6 +318,7 @@ export function createDelayChart(canvas) {
     clear(displayMode = currentDisplayMode, chartMode = currentChartMode) {
       applyDisplayMode(displayMode);
       applyChartMode(chartMode);
+      chart.options.animation = resolveAnimationOptions();
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
       clearActivePoint();

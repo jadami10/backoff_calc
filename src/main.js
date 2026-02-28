@@ -123,11 +123,50 @@ function getChartThemeTokens() {
   };
 }
 
+function hasMissingChartThemeTokens(tokens) {
+  return Object.values(tokens).some((token) => token.length === 0);
+}
+
+const CHART_THEME_SYNC_MAX_ATTEMPTS = 8;
+
+function syncChartThemeWithCss(attempt = 0) {
+  const tokens = getChartThemeTokens();
+
+  // On hard loads, CSS variables may briefly be unavailable while JS initializes.
+  if (hasMissingChartThemeTokens(tokens)) {
+    if (attempt >= CHART_THEME_SYNC_MAX_ATTEMPTS) {
+      return;
+    }
+
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => {
+        syncChartThemeWithCss(attempt + 1);
+      });
+      return;
+    }
+
+    setTimeout(() => {
+      syncChartThemeWithCss(attempt + 1);
+    }, 16);
+    return;
+  }
+
+  chart.setTheme(tokens);
+}
+
 initThemeToggle(themeToggle, {
   onThemeChange() {
-    chart.setTheme(getChartThemeTokens());
+    syncChartThemeWithCss();
   },
 });
+
+if (document.readyState === "complete") {
+  syncChartThemeWithCss();
+} else {
+  window.addEventListener("load", () => {
+    syncChartThemeWithCss();
+  });
+}
 
 function getSelectedStrategy() {
   return strategyInputs.find((input) => input.checked)?.value ?? "";
