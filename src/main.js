@@ -51,7 +51,6 @@ const factorInput = document.querySelector("#factor");
 const incrementInput = document.querySelector("#incrementMs");
 const initialDelayError = document.querySelector("#error-initialDelayMs");
 const maxRetriesError = document.querySelector("#error-maxRetries");
-const maxRetriesHint = document.querySelector("#hint-maxRetries");
 const maxDelayError = document.querySelector("#error-maxDelayMs");
 const factorError = document.querySelector("#error-factor");
 const incrementError = document.querySelector("#error-incrementMs");
@@ -86,7 +85,6 @@ if (
   !(incrementInput instanceof HTMLInputElement) ||
   !(initialDelayError instanceof HTMLElement) ||
   !(maxRetriesError instanceof HTMLElement) ||
-  !(maxRetriesHint instanceof HTMLElement) ||
   !(maxDelayError instanceof HTMLElement) ||
   !(factorError instanceof HTMLElement) ||
   !(incrementError instanceof HTMLElement) ||
@@ -255,18 +253,24 @@ function updateStrategyFields() {
  * @param {{maxRetries:number}} config
  * @param {Array<{field:string}>} errors
  */
-function renderMaxRetriesHint(config, errors) {
+function renderMaxRetriesWarning(config, errors) {
   const hasMaxRetriesError = errors.some((error) => error.field === "maxRetries");
-  if (
-    hasMaxRetriesError ||
-    !Number.isInteger(config.maxRetries) ||
-    config.maxRetries <= MAX_RETRIES_WARNING_THRESHOLD
-  ) {
-    maxRetriesHint.textContent = "";
+  maxRetriesError.classList.remove("field-error--warning");
+
+  if (hasMaxRetriesError) {
     return;
   }
 
-  maxRetriesHint.textContent = `Large schedules above ${MAX_RETRIES_WARNING_THRESHOLD} retries may render slowly.`;
+  if (
+    !Number.isInteger(config.maxRetries) ||
+    config.maxRetries <= MAX_RETRIES_WARNING_THRESHOLD
+  ) {
+    maxRetriesError.textContent = "";
+    return;
+  }
+
+  maxRetriesError.classList.add("field-error--warning");
+  maxRetriesError.textContent = `Large schedules above ${MAX_RETRIES_WARNING_THRESHOLD} retries may render slowly.`;
 }
 
 function recompute() {
@@ -293,7 +297,7 @@ function recompute() {
       incrementMs: incrementError,
     },
   });
-  renderMaxRetriesHint(config, errors);
+  renderMaxRetriesWarning(config, errors);
   if (errors.length > 0) {
     return;
   }

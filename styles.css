@@ -19,6 +19,7 @@
   --error-bg: #fff7f6;
   --error-border: #f3c8c4;
   --error-ring: rgba(232, 126, 114, 0.35);
+  --warning: #9a6700;
 
   --chart-line: #27272a;
   --chart-fill: rgba(39, 39, 42, 0.12);
@@ -43,6 +44,7 @@
   --error-bg: rgba(255, 92, 76, 0.1);
   --error-border: rgba(255, 110, 96, 0.72);
   --error-ring: rgba(255, 99, 85, 0.45);
+  --warning: #f7c65f;
 
   --chart-line: #8f7be3;
   --chart-fill: rgba(143, 123, 227, 0.2);
@@ -355,16 +357,8 @@ select:focus {
   visibility: hidden;
 }
 
-.field-note {
-  display: none;
-  grid-column: 1 / -1;
-  font-size: 0.76rem;
-  color: var(--muted);
-  line-height: 1.1;
-}
-
-.field-note:not(:empty) {
-  display: block;
+.field-error--warning {
+  color: var(--warning);
 }
 
 input[aria-invalid="true"],
