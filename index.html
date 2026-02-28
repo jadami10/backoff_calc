@@ -218,6 +218,19 @@
 
         <section class="content-block summary-panel">
           <div class="summary-grid">
+            <article class="summary-card summary-card--display">
+              <h3>Time Unit</h3>
+              <label class="summary-display-label" for="display-mode">
+                <span class="visually-hidden">Time unit display mode</span>
+                <select id="display-mode" name="displayMode">
+                  <option value="ms" selected>Milliseconds</option>
+                  <option value="s">Seconds</option>
+                  <option value="min">Minutes</option>
+                  <option value="h">Hours</option>
+                  <option value="humanize">Humanize</option>
+                </select>
+              </label>
+            </article>
             <article class="summary-card">
               <h3>Total Retries</h3>
               <p id="summary-total-retries">-</p>
@@ -229,19 +242,6 @@
             <article class="summary-card">
               <h3>Total Cumulative Wait</h3>
               <p id="summary-total-delay">-</p>
-            </article>
-            <article class="summary-card summary-card--display">
-              <h3>Display</h3>
-              <label class="summary-display-label" for="display-mode">
-                <span class="visually-hidden">Duration display mode</span>
-                <select id="display-mode" name="displayMode">
-                  <option value="ms" selected>Milliseconds</option>
-                  <option value="s">Seconds</option>
-                  <option value="min">Minutes</option>
-                  <option value="h">Hours</option>
-                  <option value="humanize">Humanize</option>
-                </select>
-              </label>
             </article>
           </div>
         </section>

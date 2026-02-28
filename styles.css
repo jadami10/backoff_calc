@@ -566,10 +566,6 @@ tbody tr:last-child td {
     min-width: 460px;
   }
 
-  .chart-mode-toggle {
-    grid-template-columns: 1fr;
-  }
-
   .chart-mode-option {
     text-align: center;
   }
