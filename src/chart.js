@@ -5,6 +5,30 @@ import {
   unitLabel,
 } from "./display.js";
 
+const HOVER_GUIDE_PLUGIN_ID = "hoverGuide";
+
+const hoverGuidePlugin = {
+  id: HOVER_GUIDE_PLUGIN_ID,
+  afterDatasetsDraw(chart, _args, options) {
+    const activeElements = chart.tooltip?.getActiveElements?.() ?? [];
+    if (activeElements.length === 0) {
+      return;
+    }
+
+    const { chartArea, ctx } = chart;
+    const x = activeElements[0].element.x;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.lineWidth = options?.lineWidth ?? 1;
+    ctx.strokeStyle = options?.color ?? "rgba(39, 39, 42, 0.28)";
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 function toChartData(points) {
   return {
     labels: points.map((point) => point.retry),
@@ -20,6 +44,7 @@ function toChartData(points) {
  * @property {string} gridColor
  * @property {string} tooltipBackgroundColor
  * @property {string} tooltipTextColor
+ * @property {string} hoverGuideColor
  */
 
 /**
@@ -32,9 +57,61 @@ export function createDelayChart(canvas) {
   }
 
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
+  let activePointIndex = null;
+
+  /**
+   * @param {number} index
+   */
+  function clampIndex(index) {
+    const maxIndex = chart.data.datasets[0].data.length - 1;
+    return Math.min(Math.max(index, 0), maxIndex);
+  }
+
+  /**
+   * @param {number} index
+   */
+  function setActivePoint(index) {
+    if (chart.data.datasets[0].data.length === 0) {
+      activePointIndex = null;
+      chart.setActiveElements([]);
+      chart.tooltip?.setActiveElements?.([], { x: 0, y: 0 });
+      return;
+    }
+
+    const clampedIndex = clampIndex(index);
+    const point = chart.getDatasetMeta(0).data[clampedIndex];
+    if (!point) {
+      return;
+    }
+
+    activePointIndex = clampedIndex;
+    const activeElements = [{ datasetIndex: 0, index: clampedIndex }];
+    const anchor = point.getProps(["x", "y"], true);
+    chart.setActiveElements(activeElements);
+    chart.tooltip?.setActiveElements?.(activeElements, anchor);
+  }
+
+  /**
+   * @param {MouseEvent | TouchEvent} event
+   */
+  function snapToNearestX(event) {
+    const elements = chart.getElementsAtEventForMode(
+      event,
+      "index",
+      { axis: "x", intersect: false },
+      false,
+    );
+    if (elements.length === 0) {
+      return;
+    }
+
+    setActivePoint(elements[0].index);
+    chart.update("none");
+  }
 
   const chart = new ChartConstructor(canvas, {
     type: "line",
+    plugins: [hoverGuidePlugin],
     data: {
       labels: [],
       datasets: [
@@ -46,6 +123,7 @@ export function createDelayChart(canvas) {
           borderWidth: 2,
           pointRadius: 3,
           pointHoverRadius: 4,
+          pointHitRadius: 18,
           fill: true,
           tension: 0.2,
         },
@@ -55,12 +133,24 @@ export function createDelayChart(canvas) {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
+      interaction: {
+        mode: "index",
+        axis: "x",
+        intersect: false,
+      },
       plugins: {
         legend: { display: false },
+        [HOVER_GUIDE_PLUGIN_ID]: {
+          color: "rgba(39, 39, 42, 0.28)",
+          lineWidth: 1,
+        },
         tooltip: {
           backgroundColor: "#111111",
           titleColor: "#f5f5f5",
           bodyColor: "#f5f5f5",
+          intersect: false,
+          mode: "index",
+          displayColors: false,
           callbacks: {
             label(context) {
               const value = context.parsed.y ?? 0;
@@ -131,9 +221,29 @@ export function createDelayChart(canvas) {
     chart.options.scales.y.ticks.color = tokens.axisTextColor;
     chart.options.scales.y.grid.color = tokens.gridColor;
     chart.options.scales.y.title.color = tokens.axisTextColor;
+    chart.options.plugins[HOVER_GUIDE_PLUGIN_ID].color = tokens.hoverGuideColor;
 
     chart.update();
   }
+
+  function handlePointerEnterOrMove(event) {
+    snapToNearestX(event);
+  }
+
+  function handlePointerLeave() {
+    if (activePointIndex === null) {
+      return;
+    }
+    setActivePoint(activePointIndex);
+    chart.update("none");
+  }
+
+  canvas.addEventListener("mousemove", handlePointerEnterOrMove);
+  canvas.addEventListener("mouseenter", handlePointerEnterOrMove);
+  canvas.addEventListener("touchmove", handlePointerEnterOrMove, { passive: true });
+  canvas.addEventListener("touchstart", handlePointerEnterOrMove, { passive: true });
+  canvas.addEventListener("mouseleave", handlePointerLeave);
+  canvas.addEventListener("touchend", handlePointerLeave, { passive: true });
 
   return {
     update(points, displayMode = currentDisplayMode) {
@@ -141,16 +251,28 @@ export function createDelayChart(canvas) {
       const chartData = toChartData(points);
       chart.data.labels = chartData.labels;
       chart.data.datasets[0].data = chartData.values;
+      if (chartData.values.length > 0) {
+        setActivePoint(chartData.values.length - 1);
+      } else {
+        setActivePoint(0);
+      }
       chart.update();
     },
     clear(displayMode = currentDisplayMode) {
       applyDisplayMode(displayMode);
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
+      setActivePoint(0);
       chart.update();
     },
     setTheme,
     destroy() {
+      canvas.removeEventListener("mousemove", handlePointerEnterOrMove);
+      canvas.removeEventListener("mouseenter", handlePointerEnterOrMove);
+      canvas.removeEventListener("touchmove", handlePointerEnterOrMove);
+      canvas.removeEventListener("touchstart", handlePointerEnterOrMove);
+      canvas.removeEventListener("mouseleave", handlePointerLeave);
+      canvas.removeEventListener("touchend", handlePointerLeave);
       chart.destroy();
     },
   };

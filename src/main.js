@@ -114,6 +114,7 @@ function getChartThemeTokens() {
     gridColor: readCssVariable("--chart-grid"),
     tooltipBackgroundColor: readCssVariable("--chart-tooltip-bg"),
     tooltipTextColor: readCssVariable("--chart-tooltip-text"),
+    hoverGuideColor: readCssVariable("--chart-grid"),
   };
 }
 
