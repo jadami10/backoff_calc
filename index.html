@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backoff Calculator</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+    ></script>
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <h1>Retry Backoff Calculator</h1>
+        <p>
+          Tune retry policy values and inspect per-retry delay plus cumulative
+          wait time.
+        </p>
+      </header>
+
+      <section class="panel controls-panel">
+        <h2>Inputs</h2>
+        <form id="backoff-form" class="controls-grid" novalidate>
+          <label class="field">
+            <span>Strategy</span>
+            <select id="strategy" name="strategy">
+              <option value="exponential" selected>Exponential</option>
+              <option value="linear">Linear</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Initial Delay (ms)</span>
+            <input
+              id="initialDelayMs"
+              name="initialDelayMs"
+              type="number"
+              min="0"
+              value="500"
+              step="any"
+            />
+          </label>
+
+          <label class="field">
+            <span>Max Retries (excludes initial request)</span>
+            <input
+              id="maxRetries"
+              name="maxRetries"
+              type="number"
+              min="0"
+              step="1"
+              value="5"
+            />
+          </label>
+
+          <label class="field">
+            <span>Max Delay Cap (ms, optional)</span>
+            <input
+              id="maxDelayMs"
+              name="maxDelayMs"
+              type="number"
+              min="0"
+              step="any"
+              value="30000"
+            />
+          </label>
+
+          <label id="factor-group" class="field strategy-only">
+            <span>Backoff Factor (&gt; 1)</span>
+            <input
+              id="factor"
+              name="factor"
+              type="number"
+              min="1.0001"
+              step="any"
+              value="2"
+            />
+          </label>
+
+          <label id="increment-group" class="field strategy-only" hidden>
+            <span>Linear Increment (ms)</span>
+            <input
+              id="incrementMs"
+              name="incrementMs"
+              type="number"
+              min="0"
+              step="any"
+              value="500"
+            />
+          </label>
+        </form>
+        <div id="error-box" class="error-box" role="alert" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="panel summary-panel">
+        <h2>Summary</h2>
+        <div class="summary-grid">
+          <article class="summary-card">
+            <h3>Total Retries</h3>
+            <p id="summary-total-retries">-</p>
+          </article>
+          <article class="summary-card">
+            <h3>Final Retry Delay</h3>
+            <p id="summary-final-delay">-</p>
+          </article>
+          <article class="summary-card">
+            <h3>Total Cumulative Wait</h3>
+            <p id="summary-total-delay">-</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel chart-panel">
+        <h2>Delay by Retry</h2>
+        <div class="chart-frame">
+          <canvas id="delay-chart" aria-label="Retry delay chart" role="img"></canvas>
+        </div>
+      </section>
+
+      <section class="panel table-panel">
+        <h2>Retry Schedule</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Retry #</th>
+                <th>Raw Delay (ms)</th>
+                <th>Capped Delay (ms)</th>
+                <th>Cumulative Delay (ms)</th>
+              </tr>
+            </thead>
+            <tbody id="schedule-body">
+              <tr>
+                <td class="placeholder-cell" colspan="4">
+                  Adjust inputs to generate a schedule.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
