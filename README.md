@@ -24,8 +24,9 @@ Static single-page app for tuning retry policies and visualizing backoff schedul
 ## CI
 
 GitHub Actions workflow:
-- Trigger: push to `main` and pull requests
+- Trigger: push to `dev`
 - Steps: `npm ci` then `npm test`
+- On success: promote the tested commit to `main`
 
 ## Netlify Deployment
 
@@ -38,7 +39,7 @@ GitHub Actions workflow:
    - Publish directory: `.`
 4. Save and deploy.
 
-After setup, every push to `main` auto-deploys on Netlify.
+After setup, pushing to `dev` runs CI first. Passing commits are promoted to `main`, and Netlify auto-deploys from `main`.
 
 ## Domain Setup
 

@@ -1,10 +1,16 @@
-name: CI
+name: CI and Promote
 
 on:
   push:
     branches:
-      - main
-  pull_request:
+      - dev
+
+concurrency:
+  group: promote-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   test:
@@ -25,3 +31,32 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  promote:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Promote tested commit to main
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin main || true
+
+          # Only fast-forward main to the exact commit that passed CI.
+          if git show-ref --verify --quiet refs/remotes/origin/main; then
+            if ! git merge-base --is-ancestor origin/main "$SHA"; then
+              echo "Refusing to promote: origin/main is not an ancestor of tested commit."
+              echo "Rebase or merge dev with main, then push dev again."
+              exit 1
+            fi
+          fi
+
+          git push origin "$SHA:main"
