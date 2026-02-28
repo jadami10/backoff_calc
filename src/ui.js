@@ -1,3 +1,9 @@
+import { DEFAULT_DISPLAY_MODE, formatDuration, resolveDisplayMode, unitLabel } from "./display.js";
+
+/**
+ * @typedef {import("./display.js").DisplayMode} DisplayMode
+ */
+
 function toNumber(value) {
   if (typeof value !== "string") {
     return Number.NaN;
@@ -7,13 +13,6 @@ function toNumber(value) {
     return Number.NaN;
   }
   return Number(trimmed);
-}
-
-function formatMs(value) {
-  if (!Number.isFinite(value)) {
-    return "-";
-  }
-  return `${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} ms`;
 }
 
 function isDigitKey(key) {
@@ -163,12 +162,15 @@ export function clearScheduleTable(tbody, message) {
 /**
  * @param {Array<{retry:number,rawDelayMs:number,delayMs:number,cumulativeDelayMs:number}>} points
  * @param {HTMLElement} tbody
+ * @param {DisplayMode} displayMode
  */
-export function renderScheduleTable(points, tbody) {
+export function renderScheduleTable(points, tbody, displayMode = DEFAULT_DISPLAY_MODE) {
   if (!points.length) {
     clearScheduleTable(tbody, "No retries configured.");
     return;
   }
+
+  const normalizedMode = resolveDisplayMode(displayMode);
 
   const rows = points.map((point) => {
     const row = document.createElement("tr");
@@ -178,9 +180,9 @@ export function renderScheduleTable(points, tbody) {
     const cumulativeDelay = document.createElement("td");
 
     retry.textContent = point.retry.toString();
-    rawDelay.textContent = formatMs(point.rawDelayMs);
-    cappedDelay.textContent = formatMs(point.delayMs);
-    cumulativeDelay.textContent = formatMs(point.cumulativeDelayMs);
+    rawDelay.textContent = formatDuration(point.rawDelayMs, normalizedMode);
+    cappedDelay.textContent = formatDuration(point.delayMs, normalizedMode);
+    cumulativeDelay.textContent = formatDuration(point.cumulativeDelayMs, normalizedMode);
 
     row.append(retry, rawDelay, cappedDelay, cumulativeDelay);
     return row;
@@ -201,9 +203,24 @@ export function resetSummary(summaryElements) {
 /**
  * @param {{totalRetries: number, finalDelayMs: number, totalDelayMs: number}} summary
  * @param {{totalRetries: HTMLElement, finalDelayMs: HTMLElement, totalDelayMs: HTMLElement}} summaryElements
+ * @param {DisplayMode} displayMode
  */
-export function renderSummary(summary, summaryElements) {
+export function renderSummary(summary, summaryElements, displayMode = DEFAULT_DISPLAY_MODE) {
+  const normalizedMode = resolveDisplayMode(displayMode);
   summaryElements.totalRetries.textContent = summary.totalRetries.toLocaleString();
-  summaryElements.finalDelayMs.textContent = formatMs(summary.finalDelayMs);
-  summaryElements.totalDelayMs.textContent = formatMs(summary.totalDelayMs);
+  summaryElements.finalDelayMs.textContent = formatDuration(summary.finalDelayMs, normalizedMode);
+  summaryElements.totalDelayMs.textContent = formatDuration(summary.totalDelayMs, normalizedMode);
+}
+
+/**
+ * @param {DisplayMode} displayMode
+ * @param {{rawDelay: HTMLElement, cappedDelay: HTMLElement, cumulativeDelay: HTMLElement}} headerElements
+ */
+export function renderDelayTableHeaders(displayMode, headerElements) {
+  const normalizedMode = resolveDisplayMode(displayMode);
+  const unit = unitLabel(normalizedMode);
+
+  headerElements.rawDelay.textContent = `Raw Delay (${unit})`;
+  headerElements.cappedDelay.textContent = `Capped Delay (${unit})`;
+  headerElements.cumulativeDelay.textContent = `Cumulative Delay (${unit})`;
 }

@@ -1,14 +1,16 @@
+import {
+  DEFAULT_DISPLAY_MODE,
+  formatDuration,
+  resolveDisplayMode,
+  unitLabel,
+} from "./display.js";
+
 function toChartData(points) {
   return {
     labels: points.map((point) => point.retry),
     values: points.map((point) => point.delayMs),
   };
 }
-
-const compactNumberFormatter = new Intl.NumberFormat(undefined, {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
 
 /**
  * @typedef {object} ChartThemeTokens
@@ -29,13 +31,15 @@ export function createDelayChart(canvas) {
     throw new Error("Chart.js is not loaded.");
   }
 
+  let currentDisplayMode = DEFAULT_DISPLAY_MODE;
+
   const chart = new ChartConstructor(canvas, {
     type: "line",
     data: {
       labels: [],
       datasets: [
         {
-          label: "Delay (ms)",
+          label: "Delay",
           data: [],
           borderColor: "#27272a",
           backgroundColor: "rgba(39, 39, 42, 0.12)",
@@ -60,7 +64,7 @@ export function createDelayChart(canvas) {
           callbacks: {
             label(context) {
               const value = context.parsed.y ?? 0;
-              return `${value.toLocaleString()} ms`;
+              return formatDuration(value, currentDisplayMode);
             },
           },
         },
@@ -85,7 +89,7 @@ export function createDelayChart(canvas) {
           ticks: {
             color: "#3f3f46",
             callback(value) {
-              return compactNumberFormatter.format(Number(value));
+              return formatDuration(Number(value), currentDisplayMode);
             },
           },
           grid: {
@@ -93,13 +97,21 @@ export function createDelayChart(canvas) {
           },
           title: {
             display: true,
-            text: "Delay (ms)",
+            text: `Delay (${unitLabel(currentDisplayMode)})`,
             color: "#3f3f46",
           },
         },
       },
     },
   });
+
+  /**
+   * @param {import("./display.js").DisplayMode} displayMode
+   */
+  function applyDisplayMode(displayMode) {
+    currentDisplayMode = resolveDisplayMode(displayMode);
+    chart.options.scales.y.title.text = `Delay (${unitLabel(currentDisplayMode)})`;
+  }
 
   /**
    * @param {ChartThemeTokens} tokens
@@ -124,13 +136,15 @@ export function createDelayChart(canvas) {
   }
 
   return {
-    update(points) {
+    update(points, displayMode = currentDisplayMode) {
+      applyDisplayMode(displayMode);
       const chartData = toChartData(points);
       chart.data.labels = chartData.labels;
       chart.data.datasets[0].data = chartData.values;
       chart.update();
     },
-    clear() {
+    clear(displayMode = currentDisplayMode) {
+      applyDisplayMode(displayMode);
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
       chart.update();

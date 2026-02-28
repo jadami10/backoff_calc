@@ -15,7 +15,7 @@ No backend and no build step are required for runtime.
 - Chart.js loaded from pinned CDN in `index.html`
 - Node built-in test runner (`node --test`)
 - GitHub Actions CI
-- Deployment target: Cloudflare Pages (static site, framework preset `None`)
+- Deployment target: Netlify (static site, no build step, auto-deploy from `main`)
 
 ## Source of Truth: Backoff Semantics
 
@@ -61,11 +61,13 @@ Defined in `src/backoff.js` and must stay consistent with UI/tests.
 ## CI/Deploy Expectations
 
 - CI should pass on every PR and push to `main`.
-- Cloudflare Pages settings:
-  - Framework preset: `None`
+- Netlify settings:
+  - Branch to deploy: `main`
+  - Base directory: empty
   - Build command: empty
-  - Output directory: `.`
-  - Production branch: `main`
+  - Publish directory: `.`
+- Deployment behavior:
+  - Pushes to `main` auto-deploy in Netlify.
 
 ## Out of Scope for v1 (Do Not Add Unless Requested)
 

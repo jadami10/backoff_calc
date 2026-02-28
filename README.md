@@ -8,6 +8,7 @@ Static single-page app for tuning retry policies and visualizing backoff schedul
 - Inputs for initial delay, max retries, max delay cap, factor, and increment
 - Live-updating chart of retry delay
 - Retry schedule table with raw, capped, and cumulative delay
+- Selectable delay display scale (ms/s/min/h) plus humanized duration output
 - Inline validation that disables stale outputs on invalid input
 
 ## Local Development
@@ -26,25 +27,24 @@ GitHub Actions workflow:
 - Trigger: push to `main` and pull requests
 - Steps: `npm ci` then `npm test`
 
-## Cloudflare Pages Deployment
+## Netlify Deployment
 
 1. Push this repository to GitHub.
-2. In Cloudflare Pages, create a new project and connect the repo.
+2. In Netlify, create a new site from Git and connect the repo.
 3. Configure:
-   - Framework preset: `None`
+   - Branch to deploy: `main`
+   - Base directory: leave empty
    - Build command: leave empty
-   - Build output directory: `.`
-   - Production branch: `main`
+   - Publish directory: `.`
 4. Save and deploy.
 
-Cloudflare Pages will then auto-deploy preview builds for pull requests and production for `main`.
+After setup, every push to `main` auto-deploys on Netlify.
 
 ## Domain Setup
 
-1. Buy a domain (Cloudflare Registrar recommended for simplest DNS management).
-2. In Cloudflare Pages project settings, add:
+1. Buy a domain from any registrar.
+2. In Netlify site settings, add:
    - `yourdomain.com`
    - optionally `www.yourdomain.com`
 3. Configure one canonical domain (for example, redirect `www` to apex).
-4. Keep SSL/TLS on Cloudflare-managed certificates (automatic).
-
+4. Keep Netlify-managed HTTPS certificates enabled (automatic).

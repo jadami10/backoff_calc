@@ -140,6 +140,19 @@
               <h3>Total Cumulative Wait</h3>
               <p id="summary-total-delay">-</p>
             </article>
+            <article class="summary-card summary-card--display">
+              <h3>Display</h3>
+              <label class="summary-display-label" for="display-mode">
+                <span class="visually-hidden">Duration display mode</span>
+                <select id="display-mode" name="displayMode">
+                  <option value="ms" selected>Milliseconds</option>
+                  <option value="s">Seconds</option>
+                  <option value="min">Minutes</option>
+                  <option value="h">Hours</option>
+                  <option value="humanize">Humanize</option>
+                </select>
+              </label>
+            </article>
           </div>
         </section>
 
@@ -149,9 +162,9 @@
               <thead>
                 <tr>
                   <th>Retry #</th>
-                  <th>Raw Delay (ms)</th>
-                  <th>Capped Delay (ms)</th>
-                  <th>Cumulative Delay (ms)</th>
+                  <th id="raw-delay-header">Raw Delay (ms)</th>
+                  <th id="capped-delay-header">Capped Delay (ms)</th>
+                  <th id="cumulative-delay-header">Cumulative Delay (ms)</th>
                 </tr>
               </thead>
               <tbody id="schedule-body">

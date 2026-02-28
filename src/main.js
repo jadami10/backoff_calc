@@ -1,10 +1,12 @@
 import { generateSchedule, summarizeSchedule, validateConfig } from "./backoff.js";
 import { createDelayChart } from "./chart.js";
+import { resolveDisplayMode } from "./display.js";
 import { initThemeToggle } from "./theme.js";
 import {
   clearScheduleTable,
   enforceNonNegativeIntegerInput,
   readConfigFromForm,
+  renderDelayTableHeaders,
   renderScheduleTable,
   renderSummary,
   renderValidation,
@@ -34,6 +36,10 @@ const incrementGroup = document.querySelector("#increment-group");
 const themeToggle = document.querySelector("#theme-toggle");
 const scheduleBody = document.querySelector("#schedule-body");
 const chartCanvas = document.querySelector("#delay-chart");
+const displayModeSelect = document.querySelector("#display-mode");
+const rawDelayHeader = document.querySelector("#raw-delay-header");
+const cappedDelayHeader = document.querySelector("#capped-delay-header");
+const cumulativeDelayHeader = document.querySelector("#cumulative-delay-header");
 const initialDelayInput = document.querySelector("#initialDelayMs");
 const maxRetriesInput = document.querySelector("#maxRetries");
 const maxDelayInput = document.querySelector("#maxDelayMs");
@@ -60,6 +66,10 @@ if (
   !(themeToggle instanceof HTMLButtonElement) ||
   !(scheduleBody instanceof HTMLElement) ||
   !(chartCanvas instanceof HTMLCanvasElement) ||
+  !(displayModeSelect instanceof HTMLSelectElement) ||
+  !(rawDelayHeader instanceof HTMLElement) ||
+  !(cappedDelayHeader instanceof HTMLElement) ||
+  !(cumulativeDelayHeader instanceof HTMLElement) ||
   !(initialDelayInput instanceof HTMLInputElement) ||
   !(maxRetriesInput instanceof HTMLInputElement) ||
   !(maxDelayInput instanceof HTMLInputElement) ||
@@ -108,6 +118,13 @@ function updateStrategyFields() {
 
 function recompute() {
   updateStrategyFields();
+  const displayMode = resolveDisplayMode(displayModeSelect.value);
+  renderDelayTableHeaders(displayMode, {
+    rawDelay: rawDelayHeader,
+    cappedDelay: cappedDelayHeader,
+    cumulativeDelay: cumulativeDelayHeader,
+  });
+
   const config = readConfigFromForm(form);
   const errors = validateConfig(config);
 
@@ -128,7 +145,7 @@ function recompute() {
     },
   });
   if (errors.length > 0) {
-    chart.clear();
+    chart.clear(displayMode);
     clearScheduleTable(scheduleBody, "Fix validation errors to see schedule.");
     resetSummary(summaryElements);
     return;
@@ -137,15 +154,16 @@ function recompute() {
   const points = generateSchedule(config);
   const summary = summarizeSchedule(points);
 
-  chart.update(points);
-  renderScheduleTable(points, scheduleBody);
-  renderSummary(summary, summaryElements);
+  chart.update(points, displayMode);
+  renderScheduleTable(points, scheduleBody, displayMode);
+  renderSummary(summary, summaryElements, displayMode);
 }
 
 const debouncedRecompute = debounce(recompute, 100);
 
 form.addEventListener("input", debouncedRecompute);
 form.addEventListener("change", debouncedRecompute);
+displayModeSelect.addEventListener("change", recompute);
 
 updateStrategyFields();
 recompute();
