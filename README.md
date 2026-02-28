@@ -2,6 +2,8 @@
 
 Static single-page app for tuning retry policies and visualizing backoff schedules.
 
+Made fully with AI tooling.
+
 ## Features
 
 - Exponential, linear, and fixed backoff strategies
