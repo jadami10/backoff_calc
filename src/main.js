@@ -70,6 +70,10 @@ const maxRetriesError = document.querySelector("#error-maxRetries");
 const maxDelayError = document.querySelector("#error-maxDelayMs");
 const factorError = document.querySelector("#error-factor");
 const incrementError = document.querySelector("#error-incrementMs");
+const chartFallbackMessage = document.querySelector("#chart-fallback-message");
+const privacyButton = document.querySelector("#privacy-button");
+const privacyModal = document.querySelector("#privacy-modal");
+const privacyCloseButton = document.querySelector("#privacy-close");
 const MAX_RETRIES_WARNING_THRESHOLD = 300;
 
 const summaryElements = {
@@ -130,7 +134,34 @@ const configInputs = {
   jitterInputs,
 };
 
-const chart = createDelayChart(chartCanvas);
+function createNoopChart() {
+  return {
+    update() {},
+    clear() {},
+    destroy() {},
+    setTheme() {},
+  };
+}
+
+function setChartUnavailableMessageVisible(visible) {
+  if (!(chartFallbackMessage instanceof HTMLElement)) {
+    return;
+  }
+  chartFallbackMessage.hidden = !visible;
+}
+
+let chart = createNoopChart();
+let hasWorkingChart = false;
+
+try {
+  chart = createDelayChart(chartCanvas);
+  hasWorkingChart = true;
+  setChartUnavailableMessageVisible(false);
+} catch (error) {
+  setChartUnavailableMessageVisible(true);
+  console.error("Chart initialization failed.", error);
+}
+
 enforceNonNegativeIntegerInput(maxRetriesInput);
 
 function readCssVariable(name) {
@@ -157,6 +188,10 @@ function hasMissingChartThemeTokens(tokens) {
 const CHART_THEME_SYNC_MAX_ATTEMPTS = 8;
 
 function syncChartThemeWithCss(attempt = 0) {
+  if (!hasWorkingChart) {
+    return;
+  }
+
   const tokens = getChartThemeTokens();
 
   // On hard loads, CSS variables may briefly be unavailable while JS initializes.
@@ -178,7 +213,14 @@ function syncChartThemeWithCss(attempt = 0) {
     return;
   }
 
-  chart.setTheme(tokens);
+  try {
+    chart.setTheme(tokens);
+  } catch (error) {
+    hasWorkingChart = false;
+    chart = createNoopChart();
+    setChartUnavailableMessageVisible(true);
+    console.error("Chart theming failed.", error);
+  }
 }
 
 initThemeToggle(themeToggle, {
@@ -472,6 +514,48 @@ function renderMaxRetriesWarning(config, errors) {
   maxRetriesError.textContent = `Large schedules above ${MAX_RETRIES_WARNING_THRESHOLD} retries may render slowly.`;
 }
 
+function updateChartSafely(points, jitterType, chartSeriesMode, displayMode, chartMode) {
+  if (!hasWorkingChart) {
+    return;
+  }
+
+  try {
+    chart.update(points, jitterType, chartSeriesMode, displayMode, chartMode);
+    setChartUnavailableMessageVisible(false);
+  } catch (error) {
+    hasWorkingChart = false;
+    chart = createNoopChart();
+    setChartUnavailableMessageVisible(true);
+    console.error("Chart rendering failed.", error);
+  }
+}
+
+function openPrivacyModal() {
+  if (!(privacyModal instanceof HTMLElement)) {
+    return;
+  }
+
+  if (typeof privacyModal.showModal === "function") {
+    privacyModal.showModal();
+    return;
+  }
+
+  privacyModal.setAttribute("open", "");
+}
+
+function closePrivacyModal() {
+  if (!(privacyModal instanceof HTMLElement)) {
+    return;
+  }
+
+  if (typeof privacyModal.close === "function") {
+    privacyModal.close();
+    return;
+  }
+
+  privacyModal.removeAttribute("open");
+}
+
 function recompute() {
   updateStrategyFields();
   const displayMode = resolveDisplayMode(displayModeSelect.value);
@@ -525,7 +609,7 @@ function recompute() {
     tertiaryDelay: tertiaryDelayHeader,
     cumulativeDelay: cumulativeDelayHeader,
   }, jitterType);
-  chart.update(chartPoints, jitterType, chartSeriesMode, displayMode, chartMode);
+  updateChartSafely(chartPoints, jitterType, chartSeriesMode, displayMode, chartMode);
   renderScheduleTable(points, scheduleBody, displayMode, jitterType);
   renderSummary(summary, summaryElements, displayMode);
 }
@@ -606,6 +690,26 @@ shareLinkButton.addEventListener("click", async () => {
     setShareButtonErrorFeedback();
   }
 });
+
+if (
+  privacyButton instanceof HTMLButtonElement &&
+  privacyCloseButton instanceof HTMLButtonElement &&
+  privacyModal instanceof HTMLElement
+) {
+  privacyButton.addEventListener("click", () => {
+    openPrivacyModal();
+  });
+
+  privacyCloseButton.addEventListener("click", () => {
+    closePrivacyModal();
+  });
+
+  privacyModal.addEventListener("click", (event) => {
+    if (event.target === privacyModal) {
+      closePrivacyModal();
+    }
+  });
+}
 
 applySharedStateFromUrl();
 updateStrategyFields();

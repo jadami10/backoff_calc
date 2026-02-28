@@ -689,6 +689,107 @@ select[aria-invalid="true"]:focus {
   max-width: 100%;
 }
 
+.chart-fallback-message {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.site-footer {
+  width: min(1080px, 95vw);
+  max-width: 100%;
+  margin: 0 auto 28px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.privacy-button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.84rem;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.privacy-button:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.privacy-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.privacy-modal {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(560px, 92vw);
+}
+
+.privacy-modal::backdrop {
+  background: color-mix(in srgb, var(--text) 42%, transparent);
+}
+
+.privacy-modal-card {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 16px 16px 14px;
+}
+
+.privacy-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.privacy-modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.privacy-close {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.84rem;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.privacy-close:hover {
+  border-color: var(--border-strong);
+}
+
+.privacy-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.privacy-modal-card p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.privacy-modal-card ul {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 .table-wrap {
   width: 100%;
   max-width: 100%;
@@ -738,6 +839,10 @@ tbody tr:last-child td {
     height: 280px;
   }
 
+  .site-footer {
+    justify-content: center;
+  }
+
   .chart-toolbar {
     justify-content: flex-start;
   }
@@ -751,6 +856,11 @@ tbody tr:last-child td {
   .app-shell {
     width: 94vw;
     margin: 20px auto 28px;
+  }
+
+  .site-footer {
+    width: 94vw;
+    margin-bottom: 20px;
   }
 
   .panel {

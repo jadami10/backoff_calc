@@ -55,7 +55,7 @@ Defined in `src/backoff.js` and must stay consistent with UI/tests.
 - If changing math or validation behavior, update tests in `tests/backoff.test.js` in the same PR.
 - Keep invalid-input behavior strict:
   - show validation errors
-  - clear chart/table summary to avoid stale data
+  - preserve the last valid chart/table/summary render while inputs are invalid
 - For UI additions, maintain mobile usability around ~375px viewport width.
 
 ## CI/Deploy Expectations

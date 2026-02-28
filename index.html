@@ -22,16 +22,34 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://retries.dev/" />
+    <meta property="og:site_name" content="Retry Backoff Calculator" />
     <meta property="og:title" content="Retry Backoff Calculator (Linear, Exponential & Fixed)" />
     <meta
       property="og:description"
       content="Calculate and visualize linear, exponential, or fixed retry schedules with capped and cumulative delay totals."
     />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://retries.dev/social-preview.png" />
+    <meta property="og:image:secure_url" content="https://retries.dev/social-preview.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Retry Backoff Calculator showing retry delay strategy options and a schedule chart."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Retry Backoff Calculator (Linear, Exponential & Fixed)" />
     <meta
       name="twitter:description"
       content="Calculate and visualize linear, exponential, or fixed retry schedules with capped and cumulative delay totals."
+    />
+    <meta
+      name="twitter:image"
+      content="https://retries.dev/social-preview.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Retry Backoff Calculator showing retry delay strategy options and a schedule chart."
     />
     <script type="application/ld+json">
       {
@@ -271,6 +289,9 @@
           <div class="chart-frame">
             <canvas id="delay-chart" aria-label="Retry delay chart" role="img"></canvas>
           </div>
+          <p id="chart-fallback-message" class="chart-fallback-message" role="status" hidden>
+            The chart is unavailable right now. You can still use the table and summary values.
+          </p>
         </section>
 
         <section class="content-block summary-panel">
@@ -327,6 +348,46 @@
         </section>
       </section>
     </main>
+    <footer class="site-footer">
+      <button
+        id="privacy-button"
+        class="privacy-button"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="privacy-modal"
+      >
+        Privacy
+      </button>
+    </footer>
+    <dialog id="privacy-modal" class="privacy-modal" aria-labelledby="privacy-title">
+      <article class="privacy-modal-card">
+        <header class="privacy-modal-header">
+          <h2 id="privacy-title">Privacy</h2>
+          <button
+            id="privacy-close"
+            class="privacy-close"
+            type="button"
+            aria-label="Close privacy details"
+          >
+            Close
+          </button>
+        </header>
+        <p>
+          This tool is stateless. Your calculator inputs and generated schedules stay in your browser
+          and are not sent to an app backend.
+        </p>
+        <p>We currently collect limited analytics through Cloudflare Web Analytics to understand:</p>
+        <ul>
+          <li>rough traffic volume and page performance</li>
+          <li>which regions and referrers bring visitors to the site</li>
+          <li>whether the site is healthy and useful over time</li>
+        </ul>
+        <p>
+          If you use the Share button, your selected values are placed in the page URL so you can copy
+          and share that link.
+        </p>
+      </article>
+    </dialog>
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "891925f0a47d4c24b8f3161ff50809f1"}'></script><!-- End Cloudflare Web Analytics -->
   </body>
 </html>
