@@ -3,6 +3,7 @@
 ## Purpose
 
 This repository hosts a static backoff calculator web app:
+
 - Tune retry strategy settings (`exponential` or `linear`)
 - Visualize per-retry delay with a line chart
 - Show table rows for raw delay, capped delay, and cumulative delay
@@ -68,10 +69,3 @@ Defined in `src/backoff.js` and must stay consistent with UI/tests.
   - Publish directory: `.`
 - Deployment behavior:
   - Pushes to `main` auto-deploy in Netlify.
-
-## Out of Scope for v1 (Do Not Add Unless Requested)
-
-- Jitter variants
-- Shareable URL state
-- Preset policy bundles
-- Backend/API services
