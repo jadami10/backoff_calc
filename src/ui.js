@@ -59,19 +59,26 @@ export function enforceNonNegativeIntegerInput(input) {
 }
 
 /**
- * @param {HTMLFormElement} form
+ * @param {{
+ *   strategyInputs: HTMLInputElement[],
+ *   initialDelayMs: HTMLInputElement,
+ *   maxRetries: HTMLInputElement,
+ *   maxDelayMs: HTMLInputElement,
+ *   factor: HTMLInputElement,
+ *   incrementMs: HTMLInputElement
+ * }} inputs
  */
-export function readConfigFromForm(form) {
-  const formData = new FormData(form);
-  const maxDelayRaw = String(formData.get("maxDelayMs") ?? "").trim();
+export function readConfigFromInputs(inputs) {
+  const maxDelayRaw = inputs.maxDelayMs.value.trim();
+  const strategy = inputs.strategyInputs.find((input) => input.checked)?.value ?? "";
 
   return {
-    strategy: String(formData.get("strategy") ?? ""),
-    initialDelayMs: toNumber(String(formData.get("initialDelayMs") ?? "")),
-    maxRetries: toNumber(String(formData.get("maxRetries") ?? "")),
+    strategy,
+    initialDelayMs: toNumber(inputs.initialDelayMs.value),
+    maxRetries: toNumber(inputs.maxRetries.value),
     maxDelayMs: maxDelayRaw === "" ? null : toNumber(maxDelayRaw),
-    factor: toNumber(String(formData.get("factor") ?? "")),
-    incrementMs: toNumber(String(formData.get("incrementMs") ?? "")),
+    factor: toNumber(inputs.factor.value),
+    incrementMs: toNumber(inputs.incrementMs.value),
   };
 }
 

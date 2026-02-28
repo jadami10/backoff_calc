@@ -5,7 +5,7 @@ import { initThemeToggle } from "./theme.js";
 import {
   clearScheduleTable,
   enforceNonNegativeIntegerInput,
-  readConfigFromForm,
+  readConfigFromInputs,
   renderDelayTableHeaders,
   renderScheduleTable,
   renderSummary,
@@ -27,7 +27,7 @@ function debounce(fn, waitMs) {
   };
 }
 
-const form = document.querySelector("#backoff-form");
+const controls = document.querySelector("#backoff-controls");
 const strategyInputs = Array.from(
   document.querySelectorAll('input[name="strategy"]'),
 );
@@ -58,7 +58,7 @@ const summaryElements = {
 };
 
 if (
-  !(form instanceof HTMLFormElement) ||
+  !(controls instanceof HTMLElement) ||
   strategyInputs.length === 0 ||
   strategyInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   !(factorGroup instanceof HTMLElement) ||
@@ -86,6 +86,15 @@ if (
 ) {
   throw new Error("Application failed to initialize due to missing DOM elements.");
 }
+
+const configInputs = {
+  strategyInputs,
+  initialDelayMs: initialDelayInput,
+  maxRetries: maxRetriesInput,
+  maxDelayMs: maxDelayInput,
+  factor: factorInput,
+  incrementMs: incrementInput,
+};
 
 const chart = createDelayChart(chartCanvas);
 enforceNonNegativeIntegerInput(maxRetriesInput);
@@ -125,7 +134,7 @@ function recompute() {
     cumulativeDelay: cumulativeDelayHeader,
   });
 
-  const config = readConfigFromForm(form);
+  const config = readConfigFromInputs(configInputs);
   const errors = validateConfig(config);
 
   renderValidation(errors, {
@@ -160,9 +169,18 @@ function recompute() {
 }
 
 const debouncedRecompute = debounce(recompute, 100);
-
-form.addEventListener("input", debouncedRecompute);
-form.addEventListener("change", debouncedRecompute);
+const recomputeInputs = [
+  ...strategyInputs,
+  initialDelayInput,
+  maxRetriesInput,
+  maxDelayInput,
+  factorInput,
+  incrementInput,
+];
+for (const input of recomputeInputs) {
+  input.addEventListener("input", debouncedRecompute);
+  input.addEventListener("change", debouncedRecompute);
+}
 displayModeSelect.addEventListener("change", recompute);
 
 updateStrategyFields();
