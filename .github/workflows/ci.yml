@@ -42,21 +42,49 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Promote tested commit to main
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Rebase onto main, verify, and promote
         env:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          git fetch origin main || true
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Only fast-forward main to the exact commit that passed CI.
-          if git show-ref --verify --quiet refs/remotes/origin/main; then
-            if ! git merge-base --is-ancestor origin/main "$SHA"; then
-              echo "Refusing to promote: origin/main is not an ancestor of tested commit."
-              echo "Rebase or merge dev with main, then push dev again."
-              exit 1
+          max_attempts=3
+          attempt=1
+
+          while [ "$attempt" -le "$max_attempts" ]; do
+            echo "Promotion attempt ${attempt}/${max_attempts}"
+            git fetch origin main || true
+            git checkout -B promote-candidate "$SHA"
+
+            if git show-ref --verify --quiet refs/remotes/origin/main; then
+              if ! git rebase origin/main; then
+                git rebase --abort || true
+                echo "Automatic rebase onto main failed due to conflicts."
+                echo "Resolve on dev, then push dev again."
+                exit 1
+              fi
             fi
-          fi
 
-          git push origin "$SHA:main"
+            npm ci
+            npm test
+
+            if git push origin HEAD:main; then
+              echo "Promotion succeeded."
+              exit 0
+            fi
+
+            echo "Push rejected (main advanced). Retrying..."
+            attempt=$((attempt + 1))
+          done
+
+          echo "Promotion failed after ${max_attempts} attempts."
+          exit 1
