@@ -3,6 +3,16 @@
  */
 
 /**
+ * @typedef {"config" | "strategy" | "initialDelayMs" | "maxRetries" | "maxDelayMs" | "factor" | "incrementMs"} ValidationErrorField
+ */
+
+/**
+ * @typedef {object} ValidationError
+ * @property {ValidationErrorField} field
+ * @property {string} message
+ */
+
+/**
  * @typedef {object} BackoffConfig
  * @property {BackoffStrategy} strategy
  * @property {number} initialDelayMs
@@ -33,43 +43,43 @@ function isFiniteNumber(value) {
 
 /**
  * @param {BackoffConfig} config
- * @returns {string[]}
+ * @returns {ValidationError[]}
  */
 export function validateConfig(config) {
   const errors = [];
 
   if (config == null || typeof config !== "object") {
-    return ["Configuration is required."];
+    return [{ field: "config", message: "Configuration is required." }];
   }
 
   if (config.strategy !== "exponential" && config.strategy !== "linear") {
-    errors.push("Strategy must be either exponential or linear.");
+    errors.push({ field: "strategy", message: "Must be exponential or linear." });
   }
 
   if (!isFiniteNumber(config.initialDelayMs) || config.initialDelayMs < 0) {
-    errors.push("Initial delay must be a number >= 0.");
+    errors.push({ field: "initialDelayMs", message: "Must be >= 0." });
   }
 
   if (!Number.isInteger(config.maxRetries) || config.maxRetries < 0) {
-    errors.push("Max retries must be an integer >= 0.");
+    errors.push({ field: "maxRetries", message: "Must be an integer >= 0." });
   }
 
   if (
     config.maxDelayMs !== null &&
     (!isFiniteNumber(config.maxDelayMs) || config.maxDelayMs < 0)
   ) {
-    errors.push("Max delay cap must be empty or a number >= 0.");
+    errors.push({ field: "maxDelayMs", message: "Must be >= 0 or blank." });
   }
 
   if (config.strategy === "exponential") {
     if (!isFiniteNumber(config.factor) || config.factor <= 1) {
-      errors.push("Exponential strategy requires factor > 1.");
+      errors.push({ field: "factor", message: "Must be > 1." });
     }
   }
 
   if (config.strategy === "linear") {
     if (!isFiniteNumber(config.incrementMs) || config.incrementMs < 0) {
-      errors.push("Linear strategy requires increment >= 0.");
+      errors.push({ field: "incrementMs", message: "Must be >= 0." });
     }
   }
 
@@ -83,7 +93,7 @@ export function validateConfig(config) {
 export function generateSchedule(config) {
   const errors = validateConfig(config);
   if (errors.length > 0) {
-    throw new Error(`Invalid backoff config: ${errors.join(" ")}`);
+    throw new Error(`Invalid configuration: ${errors.map((error) => error.message).join(" ")}`);
   }
 
   const schedule = [];
@@ -135,4 +145,3 @@ export function summarizeSchedule(points) {
     totalDelayMs: last.cumulativeDelayMs,
   };
 }
-

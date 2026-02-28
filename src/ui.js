@@ -2,6 +2,7 @@ import { DEFAULT_DISPLAY_MODE, formatDuration, resolveDisplayMode, unitLabel } f
 
 /**
  * @typedef {import("./display.js").DisplayMode} DisplayMode
+ * @typedef {import("./backoff.js").ValidationError} ValidationError
  */
 
 function toNumber(value) {
@@ -84,7 +85,7 @@ export function setStrategyVisibility(strategy, sections) {
 }
 
 /**
- * @param {string[]} errors
+ * @param {ValidationError[]} errors
  * @param {{
  *   inputs: {
  *     initialDelayMs: HTMLInputElement,
@@ -112,24 +113,8 @@ export function renderValidation(errors, targets) {
   };
 
   for (const error of errors) {
-    if (error.includes("Initial delay")) {
-      fieldErrors.initialDelayMs = error;
-      continue;
-    }
-    if (error.includes("Max retries")) {
-      fieldErrors.maxRetries = error;
-      continue;
-    }
-    if (error.includes("Max delay cap")) {
-      fieldErrors.maxDelayMs = error;
-      continue;
-    }
-    if (error.includes("factor")) {
-      fieldErrors.factor = error;
-      continue;
-    }
-    if (error.includes("increment")) {
-      fieldErrors.incrementMs = error;
+    if (Object.hasOwn(fieldErrors, error.field)) {
+      fieldErrors[error.field] = error.message;
     }
   }
 

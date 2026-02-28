@@ -79,6 +79,7 @@ test("validation rejects invalid values", () => {
   });
 
   assert.ok(exponentialErrors.length >= 4);
+  assert.ok(exponentialErrors.every((error) => "field" in error && "message" in error));
 
   const linearErrors = validateConfig({
     strategy: "linear",
@@ -88,7 +89,8 @@ test("validation rejects invalid values", () => {
     incrementMs: -100,
   });
 
-  assert.ok(linearErrors.some((error) => error.includes("increment")));
+  assert.ok(linearErrors.some((error) => error.field === "incrementMs"));
+  assert.ok(linearErrors.some((error) => error.message === "Must be >= 0."));
   assert.throws(
     () =>
       generateSchedule({
@@ -98,7 +100,6 @@ test("validation rejects invalid values", () => {
         maxDelayMs: null,
         incrementMs: -100,
       }),
-    /Invalid backoff config/,
+    /Invalid configuration/,
   );
 });
-
