@@ -228,26 +228,39 @@
 
         <section class="content-block chart-panel">
           <div class="chart-toolbar">
-            <fieldset class="chart-mode-field" aria-label="Chart delay mode">
-              <div class="chart-mode-toggle">
+            <fieldset
+              id="chart-series-field"
+              class="chart-toggle-field source-slot--reserved"
+              aria-label="Chart delay source"
+              aria-hidden="true"
+            >
+              <div class="chart-toggle-options">
                 <input
-                  id="chart-mode-delay"
+                  id="chart-series-expected"
                   type="radio"
-                  name="chartMode"
-                  value="delay"
+                  name="chartSeriesMode"
+                  value="expected"
                   checked
                 />
-                <label for="chart-mode-delay" class="chart-mode-option">Per Retry Delay</label>
+                <label for="chart-series-expected" class="chart-toggle-option">Expected</label>
 
                 <input
-                  id="chart-mode-cumulative"
+                  id="chart-series-simulated"
                   type="radio"
-                  name="chartMode"
-                  value="cumulative"
+                  name="chartSeriesMode"
+                  value="simulated"
                 />
-                <label for="chart-mode-cumulative" class="chart-mode-option">
-                  Cumulative Delay
-                </label>
+                <label for="chart-series-simulated" class="chart-toggle-option">Simulated</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="chart-toggle-field" aria-label="Chart delay mode">
+              <div class="chart-toggle-options">
+                <input id="chart-mode-delay" type="radio" name="chartMode" value="delay" checked />
+                <label for="chart-mode-delay" class="chart-toggle-option">Per Retry</label>
+
+                <input id="chart-mode-cumulative" type="radio" name="chartMode" value="cumulative" />
+                <label for="chart-mode-cumulative" class="chart-toggle-option">Cumulative</label>
               </div>
             </fieldset>
           </div>

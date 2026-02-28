@@ -581,70 +581,85 @@ select[aria-invalid="true"]:focus {
 .chart-toolbar {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 10px;
 }
 
-.chart-mode-field {
+.chart-toggle-field {
   border: 0;
   margin: 0;
   padding: 0;
+  min-width: 0;
+  display: inline-block;
 }
 
-.chart-mode-toggle {
+.chart-toggle-field.source-slot--reserved {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.chart-toggle-options {
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, auto));
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--surface);
+  min-width: 220px;
 }
 
-.chart-mode-toggle input[type="radio"] {
+.chart-toggle-options input[type="radio"] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.chart-mode-option {
-  border: 1px solid var(--border);
+.chart-toggle-option {
+  border: 0;
   border-radius: 999px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   font-size: 0.82rem;
-  color: var(--toggle-unselected-muted);
+  text-align: center;
+  color: var(--muted);
   background: var(--surface);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   transition:
-    border-color 120ms ease,
+    transform 120ms ease,
     box-shadow 120ms ease,
     background-color 120ms ease,
     color 120ms ease;
 }
 
-.chart-mode-toggle input[type="radio"]:not(:checked) + .chart-mode-option:hover {
-  border-color: var(--border-strong);
-  background: color-mix(in srgb, var(--surface) 94%, var(--border));
-}
-
-.chart-mode-toggle input[type="radio"]:not(:checked) + .chart-mode-option:active {
+.chart-toggle-options input[type="radio"]:not(:checked) + .chart-toggle-option:hover {
+  color: var(--text);
   background: color-mix(in srgb, var(--surface) 90%, var(--border));
 }
 
-.chart-mode-toggle input[type="radio"]:checked + .chart-mode-option {
-  border-color: var(--toggle-selected-border);
+.chart-toggle-options input[type="radio"]:not(:checked) + .chart-toggle-option:active {
+  transform: scale(0.99);
+}
+
+.chart-toggle-options input[type="radio"]:checked + .chart-toggle-option {
   background: var(--toggle-selected-bg);
   color: var(--toggle-selected-text);
-  box-shadow: none;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 10%, transparent);
   font-weight: 600;
 }
 
-.chart-mode-toggle input[type="radio"]:checked + .chart-mode-option:hover {
+.chart-toggle-options input[type="radio"]:checked + .chart-toggle-option:hover {
   background: var(--toggle-selected-bg-hover);
 }
 
-.chart-mode-toggle input[type="radio"]:checked + .chart-mode-option:active {
+.chart-toggle-options input[type="radio"]:checked + .chart-toggle-option:active {
   background: var(--toggle-selected-bg-active);
+  transform: scale(0.99);
 }
 
-.chart-mode-toggle input[type="radio"]:focus-visible + .chart-mode-option {
+.chart-toggle-options input[type="radio"]:focus-visible + .chart-toggle-option {
   border-color: var(--border-strong);
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
@@ -752,7 +767,7 @@ tbody tr:last-child td {
     min-width: 500px;
   }
 
-  .chart-mode-option {
+  .chart-toggle-option {
     text-align: center;
   }
 

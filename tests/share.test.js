@@ -14,6 +14,7 @@ test("createShareUrl encodes current configuration into query params", () => {
     jitter: "equal",
     displayMode: "humanize",
     chartMode: "cumulative",
+    chartSeriesMode: "simulated",
   });
 
   const parsed = new URL(url);
@@ -28,17 +29,19 @@ test("createShareUrl encodes current configuration into query params", () => {
   assert.equal(parsed.searchParams.get("jitter"), "equal");
   assert.equal(parsed.searchParams.get("displayMode"), "humanize");
   assert.equal(parsed.searchParams.get("chartMode"), "cumulative");
+  assert.equal(parsed.searchParams.get("chartSeriesMode"), "simulated");
 });
 
 test("readShareStateFromUrl accepts known params and ignores invalid mode values", () => {
   const state = readShareStateFromUrl(
-    "https://example.com/?strategy=unknown&jitter=random&displayMode=days&chartMode=total&maxRetries=5&factor=1.5",
+    "https://example.com/?strategy=unknown&jitter=random&displayMode=days&chartMode=total&chartSeriesMode=sampled&maxRetries=5&factor=1.5",
   );
 
   assert.equal(state.strategy, undefined);
   assert.equal(state.jitter, undefined);
   assert.equal(state.displayMode, undefined);
   assert.equal(state.chartMode, undefined);
+  assert.equal(state.chartSeriesMode, undefined);
   assert.equal(state.maxRetries, "5");
   assert.equal(state.factor, "1.5");
 });
@@ -54,6 +57,7 @@ test("share state round-trips strategy, display mode, and chart mode", () => {
     jitter: "full",
     displayMode: "ms",
     chartMode: "delay",
+    chartSeriesMode: "expected",
   };
   const url = createShareUrl("https://example.com/", original);
   const parsed = readShareStateFromUrl(url);
@@ -67,6 +71,7 @@ test("share state round-trips strategy, display mode, and chart mode", () => {
   assert.equal(parsed.jitter, original.jitter);
   assert.equal(parsed.displayMode, original.displayMode);
   assert.equal(parsed.chartMode, original.chartMode);
+  assert.equal(parsed.chartSeriesMode, original.chartSeriesMode);
 });
 
 test("readShareStateFromUrl accepts fixed strategy", () => {

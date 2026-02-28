@@ -9,6 +9,7 @@ import {
   unitLabel,
 } from "./display.js";
 import { DEFAULT_CHART_MODE, resolveChartMode } from "./chartMode.js";
+import { DEFAULT_CHART_SERIES_MODE, resolveChartSeriesMode } from "./chartSeriesMode.js";
 
 const HOVER_GUIDE_PLUGIN_ID = "hoverGuide";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -57,25 +58,38 @@ const hoverGuidePlugin = {
  * @param {{
  *   delayMs:number,
  *   expectedDelayMs?:number,
+ *   simulatedDelayMs?:number,
  *   minDelayMs?:number,
  *   maxDelayMs?:number,
  *   cumulativeDelayMs:number,
+ *   cumulativeSimulatedDelayMs?:number,
  *   cumulativeMinDelayMs?:number,
  *   cumulativeMaxDelayMs?:number
  * }} point
  * @param {import("./chartMode.js").ChartMode} chartMode
+ * @param {import("./chartSeriesMode.js").ChartSeriesMode} chartSeriesMode
  */
-function pointValues(point, chartMode) {
+function pointValues(point, chartMode, chartSeriesMode) {
+  const isSimulated = chartSeriesMode === "simulated";
+
   if (chartMode === "cumulative") {
+    const expected = point.cumulativeDelayMs;
+    const simulated = point.cumulativeSimulatedDelayMs ?? expected;
     return {
-      expected: point.cumulativeDelayMs,
-      min: point.cumulativeMinDelayMs ?? point.cumulativeDelayMs,
-      max: point.cumulativeMaxDelayMs ?? point.cumulativeDelayMs,
+      value: isSimulated ? simulated : expected,
+      expected,
+      simulated,
+      min: point.cumulativeMinDelayMs ?? expected,
+      max: point.cumulativeMaxDelayMs ?? expected,
     };
   }
 
+  const expected = point.expectedDelayMs ?? point.delayMs;
+  const simulated = point.simulatedDelayMs ?? expected;
   return {
-    expected: point.expectedDelayMs ?? point.delayMs,
+    value: isSimulated ? simulated : expected,
+    expected,
+    simulated,
     min: point.minDelayMs ?? point.delayMs,
     max: point.maxDelayMs ?? point.delayMs,
   };
@@ -85,24 +99,34 @@ function pointValues(point, chartMode) {
  * @param {Array<{retry:number}> & Array<{
  *   delayMs:number,
  *   expectedDelayMs?:number,
+ *   simulatedDelayMs?:number,
  *   minDelayMs?:number,
  *   maxDelayMs?:number,
  *   cumulativeDelayMs:number,
+ *   cumulativeSimulatedDelayMs?:number,
  *   cumulativeMinDelayMs?:number,
  *   cumulativeMaxDelayMs?:number
  * }>} points
  * @param {import("./chartMode.js").ChartMode} chartMode
+ * @param {import("./chartSeriesMode.js").ChartSeriesMode} chartSeriesMode
  * @param {import("./backoff.js").JitterType} jitterType
  */
-function toChartData(points, chartMode, jitterType) {
+function toChartData(points, chartMode, chartSeriesMode, jitterType) {
   const resolvedJitterType = resolveJitterType(jitterType);
+  const resolvedSeriesMode = resolveChartSeriesMode(chartSeriesMode);
+  const resolvedValues = points.map((point) =>
+    pointValues(point, chartMode, resolvedSeriesMode),
+  );
 
   return {
     labels: points.map((point) => point.retry),
-    expectedValues: points.map((point) => pointValues(point, chartMode).expected),
-    minValues: points.map((point) => pointValues(point, chartMode).min),
-    maxValues: points.map((point) => pointValues(point, chartMode).max),
+    values: resolvedValues.map((value) => value.value),
+    expectedValues: resolvedValues.map((value) => value.expected),
+    simulatedValues: resolvedValues.map((value) => value.simulated),
+    minValues: resolvedValues.map((value) => value.min),
+    maxValues: resolvedValues.map((value) => value.max),
     showRange: resolvedJitterType !== "none",
+    isSimulated: resolvedSeriesMode === "simulated",
   };
 }
 
@@ -138,13 +162,17 @@ export function createDelayChart(canvas) {
 
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
   let currentChartMode = DEFAULT_CHART_MODE;
+  let currentChartSeriesMode = DEFAULT_CHART_SERIES_MODE;
   let currentJitterType = DEFAULT_JITTER_TYPE;
   let currentChartData = {
     labels: [],
+    values: [],
     expectedValues: [],
+    simulatedValues: [],
     minValues: [],
     maxValues: [],
     showRange: false,
+    isSimulated: false,
   };
   let activePointIndex = null;
   let isPointerInsideChart = false;
@@ -214,7 +242,7 @@ export function createDelayChart(canvas) {
       labels: [],
       datasets: [
         {
-          label: "Expected Delay",
+          label: "Delay",
           data: [],
           borderColor: "#27272a",
           backgroundColor: "rgba(39, 39, 42, 0.12)",
@@ -283,12 +311,21 @@ export function createDelayChart(canvas) {
               }
 
               const expected = currentChartData.expectedValues[index];
+              const simulated = currentChartData.simulatedValues[index];
+              const lineValue = currentChartData.values[index];
               if (!currentChartData.showRange) {
-                return formatDuration(expected, currentDisplayMode);
+                return formatDuration(lineValue, currentDisplayMode);
               }
 
               const min = currentChartData.minValues[index];
               const max = currentChartData.maxValues[index];
+              if (currentChartData.isSimulated) {
+                return [
+                  `Min: ${formatDuration(min, currentDisplayMode)}`,
+                  `Simulated: ${formatDuration(simulated, currentDisplayMode)}`,
+                  `Max: ${formatDuration(max, currentDisplayMode)}`,
+                ];
+              }
               return [
                 `Min: ${formatDuration(min, currentDisplayMode)}`,
                 `Expected: ${formatDuration(expected, currentDisplayMode)}`,
@@ -351,6 +388,13 @@ export function createDelayChart(canvas) {
   }
 
   /**
+   * @param {import("./chartSeriesMode.js").ChartSeriesMode} chartSeriesMode
+   */
+  function applyChartSeriesMode(chartSeriesMode) {
+    currentChartSeriesMode = resolveChartSeriesMode(chartSeriesMode);
+  }
+
+  /**
    * @param {import("./backoff.js").JitterType} jitterType
    */
   function applyJitterType(jitterType) {
@@ -406,15 +450,22 @@ export function createDelayChart(canvas) {
     update(
       points,
       jitterType = currentJitterType,
+      chartSeriesMode = currentChartSeriesMode,
       displayMode = currentDisplayMode,
       chartMode = currentChartMode,
     ) {
       applyDisplayMode(displayMode);
       applyChartMode(chartMode);
+      applyChartSeriesMode(chartSeriesMode);
       applyJitterType(jitterType);
       chart.options.animation = resolveAnimationOptions();
 
-      const chartData = toChartData(points, currentChartMode, currentJitterType);
+      const chartData = toChartData(
+        points,
+        currentChartMode,
+        currentChartSeriesMode,
+        currentJitterType,
+      );
       currentChartData = chartData;
       chart.data.labels = chartData.labels;
 
@@ -422,7 +473,8 @@ export function createDelayChart(canvas) {
       const minDataset = chart.data.datasets[1];
       const maxDataset = chart.data.datasets[2];
 
-      expectedDataset.data = chartData.expectedValues;
+      expectedDataset.label = chartData.isSimulated ? "Simulated Delay" : "Expected Delay";
+      expectedDataset.data = chartData.values;
       expectedDataset.fill = chartData.showRange ? false : true;
 
       minDataset.hidden = !chartData.showRange;
@@ -451,10 +503,13 @@ export function createDelayChart(canvas) {
       }
       currentChartData = {
         labels: [],
+        values: [],
         expectedValues: [],
+        simulatedValues: [],
         minValues: [],
         maxValues: [],
         showRange: false,
+        isSimulated: false,
       };
 
       clearActivePoint();

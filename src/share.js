@@ -1,5 +1,6 @@
 import { isDisplayMode } from "./display.js";
 import { isChartMode } from "./chartMode.js";
+import { isChartSeriesMode } from "./chartSeriesMode.js";
 import { isJitterType } from "./backoff.js";
 
 /**
@@ -17,6 +18,7 @@ import { isJitterType } from "./backoff.js";
  * @property {import("./backoff.js").JitterType} [jitter]
  * @property {import("./display.js").DisplayMode} [displayMode]
  * @property {import("./chartMode.js").ChartMode} [chartMode]
+ * @property {import("./chartSeriesMode.js").ChartSeriesMode} [chartSeriesMode]
  */
 
 const PARAM_KEYS = {
@@ -29,6 +31,7 @@ const PARAM_KEYS = {
   jitter: "jitter",
   displayMode: "displayMode",
   chartMode: "chartMode",
+  chartSeriesMode: "chartSeriesMode",
 };
 
 /**
@@ -84,6 +87,9 @@ export function createShareUrl(baseUrl, state) {
   if (isChartMode(state.chartMode)) {
     url.searchParams.set(PARAM_KEYS.chartMode, state.chartMode);
   }
+  if (isChartSeriesMode(state.chartSeriesMode)) {
+    url.searchParams.set(PARAM_KEYS.chartSeriesMode, state.chartSeriesMode);
+  }
 
   return url.toString();
 }
@@ -98,6 +104,7 @@ export function readShareStateFromUrl(urlValue) {
   const jitter = readParam(url.searchParams, PARAM_KEYS.jitter);
   const displayMode = readParam(url.searchParams, PARAM_KEYS.displayMode);
   const chartMode = readParam(url.searchParams, PARAM_KEYS.chartMode);
+  const chartSeriesMode = readParam(url.searchParams, PARAM_KEYS.chartSeriesMode);
   const state = {};
 
   if (isStrategy(strategy)) {
@@ -118,6 +125,9 @@ export function readShareStateFromUrl(urlValue) {
   }
   if (isChartMode(chartMode)) {
     state.chartMode = chartMode;
+  }
+  if (isChartSeriesMode(chartSeriesMode)) {
+    state.chartSeriesMode = chartSeriesMode;
   }
 
   return state;
