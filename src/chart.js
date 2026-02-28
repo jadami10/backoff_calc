@@ -58,6 +58,7 @@ export function createDelayChart(canvas) {
 
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
   let activePointIndex = null;
+  let isPointerInsideChart = false;
 
   /**
    * @param {number} index
@@ -91,6 +92,12 @@ export function createDelayChart(canvas) {
     chart.tooltip?.setActiveElements?.(activeElements, anchor);
   }
 
+  function clearActivePoint() {
+    activePointIndex = null;
+    chart.setActiveElements([]);
+    chart.tooltip?.setActiveElements?.([], { x: 0, y: 0 });
+  }
+
   /**
    * @param {MouseEvent | TouchEvent} event
    */
@@ -102,6 +109,8 @@ export function createDelayChart(canvas) {
       false,
     );
     if (elements.length === 0) {
+      clearActivePoint();
+      chart.update("none");
       return;
     }
 
@@ -227,14 +236,13 @@ export function createDelayChart(canvas) {
   }
 
   function handlePointerEnterOrMove(event) {
+    isPointerInsideChart = true;
     snapToNearestX(event);
   }
 
   function handlePointerLeave() {
-    if (activePointIndex === null) {
-      return;
-    }
-    setActivePoint(activePointIndex);
+    isPointerInsideChart = false;
+    clearActivePoint();
     chart.update("none");
   }
 
@@ -244,6 +252,7 @@ export function createDelayChart(canvas) {
   canvas.addEventListener("touchstart", handlePointerEnterOrMove, { passive: true });
   canvas.addEventListener("mouseleave", handlePointerLeave);
   canvas.addEventListener("touchend", handlePointerLeave, { passive: true });
+  canvas.addEventListener("touchcancel", handlePointerLeave, { passive: true });
 
   return {
     update(points, displayMode = currentDisplayMode) {
@@ -251,10 +260,12 @@ export function createDelayChart(canvas) {
       const chartData = toChartData(points);
       chart.data.labels = chartData.labels;
       chart.data.datasets[0].data = chartData.values;
-      if (chartData.values.length > 0) {
-        setActivePoint(chartData.values.length - 1);
+      if (chartData.values.length === 0) {
+        clearActivePoint();
+      } else if (isPointerInsideChart && activePointIndex !== null) {
+        setActivePoint(activePointIndex);
       } else {
-        setActivePoint(0);
+        clearActivePoint();
       }
       chart.update();
     },
@@ -262,7 +273,7 @@ export function createDelayChart(canvas) {
       applyDisplayMode(displayMode);
       chart.data.labels = [];
       chart.data.datasets[0].data = [];
-      setActivePoint(0);
+      clearActivePoint();
       chart.update();
     },
     setTheme,
@@ -273,6 +284,7 @@ export function createDelayChart(canvas) {
       canvas.removeEventListener("touchstart", handlePointerEnterOrMove);
       canvas.removeEventListener("mouseleave", handlePointerLeave);
       canvas.removeEventListener("touchend", handlePointerLeave);
+      canvas.removeEventListener("touchcancel", handlePointerLeave);
       chart.destroy();
     },
   };
