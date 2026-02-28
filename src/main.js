@@ -1,6 +1,7 @@
 import { generateSchedule, summarizeSchedule, validateConfig } from "./backoff.js";
 import { createDelayChart } from "./chart.js";
 import { resolveDisplayMode } from "./display.js";
+import { createShareUrl, readShareStateFromUrl } from "./share.js";
 import { initThemeToggle } from "./theme.js";
 import {
   clearScheduleTable,
@@ -33,6 +34,7 @@ const strategyInputs = Array.from(
 );
 const factorGroup = document.querySelector("#factor-group");
 const incrementGroup = document.querySelector("#increment-group");
+const shareLinkButton = document.querySelector("#share-link");
 const themeToggle = document.querySelector("#theme-toggle");
 const scheduleBody = document.querySelector("#schedule-body");
 const chartCanvas = document.querySelector("#delay-chart");
@@ -63,6 +65,7 @@ if (
   strategyInputs.some((input) => !(input instanceof HTMLInputElement)) ||
   !(factorGroup instanceof HTMLElement) ||
   !(incrementGroup instanceof HTMLElement) ||
+  !(shareLinkButton instanceof HTMLButtonElement) ||
   !(themeToggle instanceof HTMLButtonElement) ||
   !(scheduleBody instanceof HTMLElement) ||
   !(chartCanvas instanceof HTMLCanvasElement) ||
@@ -120,8 +123,112 @@ initThemeToggle(themeToggle, {
   },
 });
 
+function getSelectedStrategy() {
+  return strategyInputs.find((input) => input.checked)?.value ?? "";
+}
+
+function applySharedStateFromUrl() {
+  const shareState = readShareStateFromUrl(window.location.href);
+
+  if (shareState.strategy === "exponential" || shareState.strategy === "linear") {
+    const targetInput = strategyInputs.find((input) => input.value === shareState.strategy);
+    if (targetInput != null) {
+      targetInput.checked = true;
+    }
+  }
+
+  if (typeof shareState.initialDelayMs === "string") {
+    initialDelayInput.value = shareState.initialDelayMs;
+  }
+  if (typeof shareState.maxRetries === "string") {
+    maxRetriesInput.value = shareState.maxRetries;
+  }
+  if (typeof shareState.maxDelayMs === "string") {
+    maxDelayInput.value = shareState.maxDelayMs;
+  }
+  if (typeof shareState.factor === "string") {
+    factorInput.value = shareState.factor;
+  }
+  if (typeof shareState.incrementMs === "string") {
+    incrementInput.value = shareState.incrementMs;
+  }
+  if (typeof shareState.displayMode === "string") {
+    displayModeSelect.value = shareState.displayMode;
+  }
+}
+
+/**
+ * @param {string} text
+ */
+async function copyTextToClipboard(text) {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.clipboard != null &&
+    typeof navigator.clipboard.writeText === "function"
+  ) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const fallbackTextarea = document.createElement("textarea");
+  fallbackTextarea.value = text;
+  fallbackTextarea.setAttribute("readonly", "");
+  fallbackTextarea.style.position = "fixed";
+  fallbackTextarea.style.opacity = "0";
+  document.body.append(fallbackTextarea);
+  fallbackTextarea.select();
+
+  const copied = document.execCommand("copy");
+  fallbackTextarea.remove();
+
+  if (!copied) {
+    throw new Error("Clipboard copy failed.");
+  }
+}
+
+let shareButtonFeedbackTimeoutId = null;
+
+function resetShareButtonState() {
+  shareLinkButton.setAttribute("aria-label", "Copy URL for current config");
+  shareLinkButton.setAttribute("title", "Copy URL for current config");
+  shareLinkButton.classList.remove("share-link-button--copied");
+  shareLinkButton.classList.remove("share-link-button--error");
+}
+
+function setShareButtonCopiedFeedback() {
+  if (shareButtonFeedbackTimeoutId !== null) {
+    clearTimeout(shareButtonFeedbackTimeoutId);
+  }
+
+  shareLinkButton.setAttribute("aria-label", "Copied URL to clipboard");
+  shareLinkButton.setAttribute("title", "Copied URL to clipboard");
+  shareLinkButton.classList.add("share-link-button--copied");
+  shareLinkButton.classList.remove("share-link-button--error");
+
+  shareButtonFeedbackTimeoutId = setTimeout(() => {
+    resetShareButtonState();
+    shareButtonFeedbackTimeoutId = null;
+  }, 1400);
+}
+
+function setShareButtonErrorFeedback() {
+  if (shareButtonFeedbackTimeoutId !== null) {
+    clearTimeout(shareButtonFeedbackTimeoutId);
+  }
+
+  shareLinkButton.setAttribute("aria-label", "Failed to copy URL");
+  shareLinkButton.setAttribute("title", "Failed to copy URL");
+  shareLinkButton.classList.remove("share-link-button--copied");
+  shareLinkButton.classList.add("share-link-button--error");
+
+  shareButtonFeedbackTimeoutId = setTimeout(() => {
+    resetShareButtonState();
+    shareButtonFeedbackTimeoutId = null;
+  }, 1400);
+}
+
 function updateStrategyFields() {
-  const selectedStrategy = strategyInputs.find((input) => input.checked)?.value ?? "";
+  const selectedStrategy = getSelectedStrategy();
   setStrategyVisibility(selectedStrategy, { factorGroup, incrementGroup });
 }
 
@@ -183,5 +290,25 @@ for (const input of recomputeInputs) {
 }
 displayModeSelect.addEventListener("change", recompute);
 
+shareLinkButton.addEventListener("click", async () => {
+  const shareUrl = createShareUrl(window.location.href, {
+    strategy: getSelectedStrategy(),
+    initialDelayMs: initialDelayInput.value,
+    maxRetries: maxRetriesInput.value,
+    maxDelayMs: maxDelayInput.value,
+    factor: factorInput.value,
+    incrementMs: incrementInput.value,
+    displayMode: resolveDisplayMode(displayModeSelect.value),
+  });
+
+  try {
+    await copyTextToClipboard(shareUrl);
+    setShareButtonCopiedFeedback();
+  } catch {
+    setShareButtonErrorFeedback();
+  }
+});
+
+applySharedStateFromUrl();
 updateStrategyFields();
 recompute();

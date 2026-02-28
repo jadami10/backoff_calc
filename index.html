@@ -17,16 +17,36 @@
         <header class="app-header">
           <div class="header-row">
             <h1>Retry Backoff Calculator</h1>
-            <button
-              id="theme-toggle"
-              class="theme-toggle"
-              type="button"
-              aria-label="Switch theme"
-              title="Switch theme"
-              aria-pressed="false"
-            >
-              ☀
-            </button>
+            <div class="header-actions">
+              <button
+                id="share-link"
+                class="share-link-button"
+                type="button"
+                aria-label="Copy URL for current config"
+                title="Copy URL for current config"
+              >
+                <span class="share-link-icon share-link-icon--default" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path
+                      d="M11.47 3.22a.75.75 0 0 1 1.06 0l3.75 3.75a.75.75 0 1 1-1.06 1.06L12.75 5.56V13a.75.75 0 0 1-1.5 0V5.56L8.78 8.03a.75.75 0 1 1-1.06-1.06l3.75-3.75ZM6.5 9.25A2.25 2.25 0 0 0 4.25 11.5v7A2.25 2.25 0 0 0 6.5 20.75h11A2.25 2.25 0 0 0 19.75 18.5v-7a2.25 2.25 0 0 0-2.25-2.25h-2.25a.75.75 0 0 0 0 1.5h2.25c.41 0 .75.34.75.75v7a.75.75 0 0 1-.75.75h-11a.75.75 0 0 1-.75-.75v-7c0-.41.34-.75.75-.75h2.25a.75.75 0 0 0 0-1.5H6.5Z"
+                    />
+                  </svg>
+                </span>
+                <span class="share-link-icon share-link-icon--success" aria-hidden="true">✓</span>
+                <span class="share-link-icon share-link-icon--error" aria-hidden="true">!</span>
+                <span class="visually-hidden">Copy URL for current config</span>
+              </button>
+              <button
+                id="theme-toggle"
+                class="theme-toggle"
+                type="button"
+                aria-label="Switch theme"
+                title="Switch theme"
+                aria-pressed="false"
+              >
+                ☀
+              </button>
+            </div>
           </div>
         </header>
 

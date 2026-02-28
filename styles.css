@@ -91,6 +91,12 @@ body {
   gap: 16px;
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: clamp(1.35rem, 1.2vw + 1rem, 1.9rem);
@@ -119,13 +125,95 @@ body {
   transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
 }
 
+.share-link-button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.share-link-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.share-link-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: currentColor;
+  display: block;
+  transform: translateY(-0.5px);
+}
+
+.share-link-icon--success,
+.share-link-icon--error {
+  display: none;
+}
+
+.share-link-button:hover {
+  border-color: var(--border-strong);
+}
+
+.share-link-button:active {
+  background: color-mix(in srgb, var(--surface) 90%, var(--border));
+}
+
+.share-link-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.share-link-button--copied {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--surface) 84%, var(--border));
+}
+
+.share-link-button--copied .share-link-icon--default {
+  display: none;
+}
+
+.share-link-button--copied .share-link-icon--success {
+  display: inline-flex;
+}
+
+.share-link-button--error {
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.share-link-button--error .share-link-icon--default {
+  display: none;
+}
+
+.share-link-button--error .share-link-icon--error {
+  display: inline-flex;
+}
+
 .theme-toggle:hover {
-  transform: translateY(-1px);
   border-color: var(--border-strong);
 }
 
 .theme-toggle:active {
-  transform: translateY(0);
+  background: color-mix(in srgb, var(--surface) 90%, var(--border));
 }
 
 .theme-toggle:focus-visible {
