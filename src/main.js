@@ -74,6 +74,13 @@ const chartFallbackMessage = document.querySelector("#chart-fallback-message");
 const privacyButton = document.querySelector("#privacy-button");
 const privacyModal = document.querySelector("#privacy-modal");
 const privacyCloseButton = document.querySelector("#privacy-close");
+const helpButton = document.querySelector("#help-button");
+const helpModal = document.querySelector("#help-modal");
+const helpCloseButton = document.querySelector("#help-close");
+const helpTabBackoff = document.querySelector("#help-tab-backoff");
+const helpTabJitter = document.querySelector("#help-tab-jitter");
+const helpPanelBackoff = document.querySelector("#help-panel-backoff");
+const helpPanelJitter = document.querySelector("#help-panel-jitter");
 const MAX_RETRIES_WARNING_THRESHOLD = 300;
 
 const summaryElements = {
@@ -556,6 +563,66 @@ function closePrivacyModal() {
   privacyModal.removeAttribute("open");
 }
 
+/**
+ * @param {string} activeTabId
+ */
+function setActiveHelpTab(activeTabId) {
+  if (
+    !(helpTabBackoff instanceof HTMLButtonElement) ||
+    !(helpTabJitter instanceof HTMLButtonElement) ||
+    !(helpPanelBackoff instanceof HTMLElement) ||
+    !(helpPanelJitter instanceof HTMLElement)
+  ) {
+    return;
+  }
+
+  const tabPanelPairs = [
+    { tab: helpTabBackoff, panel: helpPanelBackoff },
+    { tab: helpTabJitter, panel: helpPanelJitter },
+  ];
+
+  for (const { tab, panel } of tabPanelPairs) {
+    const isActive = tab.id === activeTabId;
+    tab.setAttribute("aria-selected", isActive ? "true" : "false");
+    tab.setAttribute("tabindex", isActive ? "0" : "-1");
+    panel.hidden = !isActive;
+  }
+}
+
+function openHelpModal() {
+  if (!(helpModal instanceof HTMLElement)) {
+    return;
+  }
+
+  setActiveHelpTab("help-tab-backoff");
+  closeJitterPopover();
+
+  if (!helpModal.hasAttribute("open")) {
+    if (typeof helpModal.showModal === "function") {
+      helpModal.showModal();
+    } else {
+      helpModal.setAttribute("open", "");
+    }
+  }
+
+  if (helpTabBackoff instanceof HTMLButtonElement) {
+    helpTabBackoff.focus();
+  }
+}
+
+function closeHelpModal() {
+  if (!(helpModal instanceof HTMLElement) || !helpModal.hasAttribute("open")) {
+    return;
+  }
+
+  if (typeof helpModal.close === "function") {
+    helpModal.close();
+    return;
+  }
+
+  helpModal.removeAttribute("open");
+}
+
 function recompute() {
   updateStrategyFields();
   const displayMode = resolveDisplayMode(displayModeSelect.value);
@@ -690,6 +757,87 @@ shareLinkButton.addEventListener("click", async () => {
     setShareButtonErrorFeedback();
   }
 });
+
+if (
+  helpButton instanceof HTMLButtonElement &&
+  helpCloseButton instanceof HTMLButtonElement &&
+  helpModal instanceof HTMLElement &&
+  helpTabBackoff instanceof HTMLButtonElement &&
+  helpTabJitter instanceof HTMLButtonElement
+) {
+  const helpTabs = [helpTabBackoff, helpTabJitter];
+
+  helpButton.addEventListener("click", () => {
+    openHelpModal();
+  });
+
+  helpCloseButton.addEventListener("click", () => {
+    closeHelpModal();
+  });
+
+  helpModal.addEventListener("click", (event) => {
+    if (event.target === helpModal) {
+      closeHelpModal();
+    }
+  });
+
+  helpModal.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeHelpModal();
+  });
+
+  helpModal.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    closeHelpModal();
+  });
+
+  for (const tab of helpTabs) {
+    tab.addEventListener("click", () => {
+      setActiveHelpTab(tab.id);
+    });
+
+    tab.addEventListener("keydown", (event) => {
+      const activeIndex = helpTabs.findIndex((helpTab) => helpTab.id === tab.id);
+      if (activeIndex < 0) {
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        const nextTab = helpTabs[(activeIndex + 1) % helpTabs.length];
+        setActiveHelpTab(nextTab.id);
+        nextTab.focus();
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        const nextTab = helpTabs[(activeIndex - 1 + helpTabs.length) % helpTabs.length];
+        setActiveHelpTab(nextTab.id);
+        nextTab.focus();
+        return;
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        const nextTab = helpTabs[0];
+        setActiveHelpTab(nextTab.id);
+        nextTab.focus();
+        return;
+      }
+
+      if (event.key === "End") {
+        event.preventDefault();
+        const nextTab = helpTabs[helpTabs.length - 1];
+        setActiveHelpTab(nextTab.id);
+        nextTab.focus();
+      }
+    });
+  }
+}
 
 if (
   privacyButton instanceof HTMLButtonElement &&

@@ -82,6 +82,18 @@
             <h1>Retry Backoff Calculator</h1>
             <div class="header-actions">
               <button
+                id="help-button"
+                class="help-button"
+                type="button"
+                aria-label="Open backoff help"
+                title="Backoff and jitter help"
+                aria-haspopup="dialog"
+                aria-controls="help-modal"
+              >
+                <span aria-hidden="true">?</span>
+                <span class="visually-hidden">Open backoff and jitter help</span>
+              </button>
+              <button
                 id="share-link"
                 class="share-link-button"
                 type="button"
@@ -400,6 +412,246 @@
           If you use the Share button, your selected values are placed in the page URL so you can copy
           and share that link.
         </p>
+      </article>
+    </dialog>
+    <dialog id="help-modal" class="help-modal" aria-labelledby="help-title">
+      <article class="help-modal-card">
+        <header class="help-modal-header">
+          <h2 id="help-title">Backoff Help</h2>
+          <button id="help-close" class="help-close" type="button" aria-label="Close backoff help">
+            Close
+          </button>
+        </header>
+
+        <div class="help-tabs" role="tablist" aria-label="Backoff help topics">
+          <button
+            id="help-tab-backoff"
+            class="help-tab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="help-panel-backoff"
+            tabindex="0"
+          >
+            Backoff Strategies
+          </button>
+          <button
+            id="help-tab-jitter"
+            class="help-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="help-panel-jitter"
+            tabindex="-1"
+          >
+            Jitter
+          </button>
+        </div>
+
+        <section
+          id="help-panel-backoff"
+          class="help-panel"
+          role="tabpanel"
+          aria-labelledby="help-tab-backoff"
+        >
+          <p class="help-lead">
+            Retry logic helps absorb transient errors like short network drops, brief overloads, or
+            temporary upstream unavailability.
+            
+            Backoff matters because immediate repeated retries can amplify incidents. Increasing delay
+            gives systems time to recover and reduces repeated pressure.
+          </p>
+          <ul class="help-list">
+            <li>
+              <strong>Exponential:</strong> Delay grows by a multiplier each retry. Strong pressure
+              reduction and usually the safest default when failure behavior is unknown.
+            </li>
+            <li>
+              <strong>Linear:</strong> Delay increases by a fixed step each retry. Easier to reason
+              about when you want gradual, predictable delay.
+            </li>
+            <li>
+              <strong>Fixed:</strong> Delay stays constant for every retry. Useful when you need a
+              strict retry cadence or very simple behavior.
+            </li>
+          </ul>
+
+          <p class="help-lead">
+            <strong>For simple or small systems, any retry strategy can work.</strong> It is fine to pick something simple.
+          </p>
+          <p class="help-lead">
+            <strong>For complex or distributed systems, the best retry strategy is generally an exponential backoff.</strong>
+            The overall goal is to:
+          </p>
+          <ul class="help-list">
+            <li>
+              allow the system to absorb a small number of intermittent failures
+            </li>
+            <li>
+              cap the amount of the traffic the system gets during broad failures
+            </li>
+          </ul>
+          <p class="help-lead">
+            Without backoff, a system with consistent request traffic will begin compounding requests
+            endlessly during downtime, and even if the root cause is fixed, it may never recover due
+            to the amount of requests that have piled up and are retrying.
+          </p>
+          <p class="help-lead">
+            In general, you want to employ many strategies to cap the amount of traffic your system
+            can receive during an incident or other failure mode.
+          </p>
+          <ul class="help-list">
+            <li>
+              exponential backoff on retries
+            </li>
+            <li>
+              cap the number of retries
+            </li>
+            <li>
+              selective retries for only certain error modes
+            </li>
+            <li>
+              global circuit breaker
+            </li>
+          </ul>
+        </section>
+
+        <section
+          id="help-panel-jitter"
+          class="help-panel"
+          role="tabpanel"
+          aria-labelledby="help-tab-jitter"
+          hidden
+        >
+          <p class="help-lead">
+            Jitter is randomization around each retry delay. In systems with many clients, it keeps
+            clients from retrying at the exact same time causing periodic spikes in requests.
+          </p>
+          <p class="help-lead">
+            Use jitter when many clients can fail together, when upstreams enforce rate limits, or
+            when synchronized retries could create retry storms.
+          </p>
+          <ul class="help-list">
+            <li>
+              <strong>None:</strong> Uses the deterministic delay exactly. Simple to predict, but
+              clients stay synchronized.
+            </li>
+            <li>
+              <strong>Equal:</strong> Retries happen between 50% and 100% of the computed delay.
+              This is a balance of spread but with a guaranteed minimum wait.
+            </li>
+            <li>
+              <strong>Full:</strong> Retries happen between 0% and 100% of the computed delay. 
+              This maximizes spread and best reduces synchronized spikes.
+            </li>
+          </ul>
+
+          <div class="help-table-wrap">
+            <table class="help-table">
+              <caption class="visually-hidden">Jitter mode comparison</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Good Use Case</th>
+                  <th scope="col">None</th>
+                  <th scope="col">Equal</th>
+                  <th scope="col">Full</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Few concurrent clients</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Need deterministic retry timing for debugging or audit traces</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Many clients may retry together after the same failure</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Want randomness but still reasonably bounded</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Want to reduce retry storms</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Need a strict minimum wait before each retry</th>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--yes" aria-hidden="true">✓</span>
+                    <span class="visually-hidden">Yes</span>
+                  </td>
+                  <td class="help-cell">
+                    <span class="help-state help-state--no" aria-hidden="true">X</span>
+                    <span class="visually-hidden">No</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </article>
     </dialog>
     <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "891925f0a47d4c24b8f3161ff50809f1"}'></script><!-- End Cloudflare Web Analytics -->
