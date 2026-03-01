@@ -4,7 +4,7 @@
 
 export const DISPLAY_MODES = /** @type {const} */ (["ms", "s", "min", "h", "humanize"]);
 
-export const DEFAULT_DISPLAY_MODE = "ms";
+export const DEFAULT_DISPLAY_MODE = "humanize";
 
 function formatNumber(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
