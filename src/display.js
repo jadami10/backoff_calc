@@ -5,7 +5,7 @@
 export const DISPLAY_MODES = /** @type {const} */ (["ms", "s", "min", "h", "humanize"]);
 
 export const DEFAULT_DISPLAY_MODE = "humanize";
-const DIGIT_CUTOFF = 12;
+const DIGIT_CUTOFF = 9;
 const SCIENTIFIC_SIGNIFICANT_DIGITS = 4;
 const MS_PER_WEEK = 7 * 24 * 3600 * 1000;
 const MS_PER_YEAR = 52 * MS_PER_WEEK;
