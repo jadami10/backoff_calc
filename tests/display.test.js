@@ -44,18 +44,18 @@ test("human-readable mode handles zero and fractional milliseconds", () => {
   assert.equal(formatDuration(1234.56, "humanize"), "1s 234.56ms");
 });
 
-test("explicit unit modes switch to scientific notation at 12 digits", () => {
-  assert.equal(formatDuration(99_999_999_999, "ms"), "99,999,999,999 ms");
-  assert.equal(formatDuration(100_000_000_000, "ms"), "1e+11 ms");
+test("explicit unit modes switch to scientific notation at 9 digits", () => {
+  assert.equal(formatDuration(99_999_999, "ms"), "99,999,999 ms");
+  assert.equal(formatDuration(100_000_000, "ms"), "1e+8 ms");
 
-  assert.equal(formatDuration(99_999_999_999 * 1000, "s"), "99,999,999,999 s");
-  assert.equal(formatDuration(100_000_000_000 * 1000, "s"), "1e+11 s");
+  assert.equal(formatDuration(99_999_999 * 1000, "s"), "99,999,999 s");
+  assert.equal(formatDuration(100_000_000 * 1000, "s"), "1e+8 s");
 
-  assert.equal(formatDuration(99_999_999_999 * 60_000, "min"), "99,999,999,999 min");
-  assert.equal(formatDuration(100_000_000_000 * 60_000, "min"), "1e+11 min");
+  assert.equal(formatDuration(99_999_999 * 60_000, "min"), "99,999,999 min");
+  assert.equal(formatDuration(100_000_000 * 60_000, "min"), "1e+8 min");
 
-  assert.equal(formatDuration(99_999_999_999 * 3_600_000, "h"), "99,999,999,999 h");
-  assert.equal(formatDuration(100_000_000_000 * 3_600_000, "h"), "1e+11 h");
+  assert.equal(formatDuration(99_999_999 * 3_600_000, "h"), "99,999,999 h");
+  assert.equal(formatDuration(100_000_000 * 3_600_000, "h"), "1e+8 h");
 });
 
 test("scientific notation keeps four significant digits and trims trailing zeros", () => {
@@ -70,9 +70,9 @@ test("scientific notation preserves sign and explicit mode zero formatting", () 
 });
 
 test("human-readable mode uses mixed units below years cutoff and scientific years at cutoff", () => {
-  assert.equal(formatDuration(YEAR_MS * 10 ** 10, "humanize"), "10,000,000,000y");
-  assert.equal(formatDuration(YEAR_MS * 10 ** 11, "humanize"), "1e+11y");
-  assert.equal(formatDuration(-YEAR_MS * 10 ** 11, "humanize"), "-1e+11y");
+  assert.equal(formatDuration(YEAR_MS * 99_999_999, "humanize"), "99,999,999y");
+  assert.equal(formatDuration(YEAR_MS * 100_000_000, "humanize"), "1e+8y");
+  assert.equal(formatDuration(-YEAR_MS * 100_000_000, "humanize"), "-1e+8y");
 });
 
 test("non-finite values render as placeholder", () => {
