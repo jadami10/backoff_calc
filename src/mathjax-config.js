@@ -5,9 +5,5 @@ window.MathJax = {
   chtml: {
     displayAlign: "left",
     displayIndent: "0",
-    linebreaks: {
-      automatic: true,
-      width: "container",
-    },
   },
 };
