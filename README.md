@@ -4,6 +4,8 @@ Static single-page app for tuning retry policies and visualizing backoff schedul
 
 Made fully with AI tooling.
 
+Live site: [retries.dev](https://retries.dev/)
+
 ## Features
 
 - Exponential, linear, and fixed backoff strategies
