@@ -9,6 +9,8 @@ import {
   unitLabel,
 } from "../src/display.js";
 
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
 function formatNumber(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
@@ -32,6 +34,37 @@ test("human-readable mode uses compact mixed units", () => {
 test("human-readable mode handles zero and fractional milliseconds", () => {
   assert.equal(formatDuration(0, "humanize"), "0 ms");
   assert.equal(formatDuration(1234.56, "humanize"), "1s 234.56ms");
+});
+
+test("explicit unit modes switch to scientific notation at 12 digits", () => {
+  assert.equal(formatDuration(99_999_999_999, "ms"), "99,999,999,999 ms");
+  assert.equal(formatDuration(100_000_000_000, "ms"), "1e+11 ms");
+
+  assert.equal(formatDuration(99_999_999_999 * 1000, "s"), "99,999,999,999 s");
+  assert.equal(formatDuration(100_000_000_000 * 1000, "s"), "1e+11 s");
+
+  assert.equal(formatDuration(99_999_999_999 * 60_000, "min"), "99,999,999,999 min");
+  assert.equal(formatDuration(100_000_000_000 * 60_000, "min"), "1e+11 min");
+
+  assert.equal(formatDuration(99_999_999_999 * 3_600_000, "h"), "99,999,999,999 h");
+  assert.equal(formatDuration(100_000_000_000 * 3_600_000, "h"), "1e+11 h");
+});
+
+test("scientific notation keeps four significant digits and trims trailing zeros", () => {
+  assert.equal(formatDuration(1_234_567_890_123, "ms"), "1.235e+12 ms");
+  assert.equal(formatDuration(1_230_000_000_000, "ms"), "1.23e+12 ms");
+  assert.equal(formatDuration(1_000_000_000_000, "ms"), "1e+12 ms");
+});
+
+test("scientific notation preserves sign and explicit mode zero formatting", () => {
+  assert.equal(formatDuration(-100_000_000_000, "ms"), "-1e+11 ms");
+  assert.equal(formatDuration(0, "ms"), "0 ms");
+});
+
+test("human-readable mode uses mixed units below weeks cutoff and scientific weeks at cutoff", () => {
+  assert.equal(formatDuration(WEEK_MS * 10 ** 10, "humanize"), "10,000,000,000w");
+  assert.equal(formatDuration(WEEK_MS * 10 ** 11, "humanize"), "1e+11w");
+  assert.equal(formatDuration(-WEEK_MS * 10 ** 11, "humanize"), "-1e+11w");
 });
 
 test("non-finite values render as placeholder", () => {

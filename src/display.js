@@ -5,9 +5,71 @@
 export const DISPLAY_MODES = /** @type {const} */ (["ms", "s", "min", "h", "humanize"]);
 
 export const DEFAULT_DISPLAY_MODE = "humanize";
+const DIGIT_CUTOFF = 12;
+const SCIENTIFIC_SIGNIFICANT_DIGITS = 4;
+const MS_PER_WEEK = 7 * 24 * 3600 * 1000;
 
 function formatNumber(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+/**
+ * @param {number} value
+ */
+function digitCount(value) {
+  const absoluteValue = Math.abs(value);
+  if (absoluteValue < 1) {
+    return 1;
+  }
+  return Math.floor(Math.log10(absoluteValue)) + 1;
+}
+
+/**
+ * @param {number} value
+ */
+function shouldUseScientificNotation(value) {
+  return Number.isFinite(value) && digitCount(value) >= DIGIT_CUTOFF;
+}
+
+function trimMantissa(mantissa) {
+  return mantissa.replace(/(?:\.0+|(\.\d*?[1-9])0+)$/, "$1");
+}
+
+/**
+ * @param {string} exponent
+ */
+function normalizeExponent(exponent) {
+  const sign = exponent.startsWith("-") ? "-" : "+";
+  const rawDigits = exponent.replace(/^[+-]/, "");
+  const digits = rawDigits.replace(/^0+/, "") || "0";
+  return `${sign}${digits}`;
+}
+
+/**
+ * @param {number} value
+ */
+function formatScientificNumber(value) {
+  if (value === 0) {
+    return "0";
+  }
+
+  const sign = value < 0 ? "-" : "";
+  const scientific = Math.abs(value).toExponential(SCIENTIFIC_SIGNIFICANT_DIGITS - 1);
+  const [mantissa, exponent = "+0"] = scientific.split("e");
+  const normalizedMantissa = trimMantissa(mantissa);
+  const normalizedExponent = normalizeExponent(exponent);
+  return `${sign}${normalizedMantissa}e${normalizedExponent}`;
+}
+
+/**
+ * @param {number} value
+ * @param {"ms" | "s" | "min" | "h"} unit
+ */
+function formatScaledDuration(value, unit) {
+  if (shouldUseScientificNotation(value)) {
+    return `${formatScientificNumber(value)} ${unit}`;
+  }
+  return `${formatNumber(value)} ${unit}`;
 }
 
 /**
@@ -58,8 +120,13 @@ function formatHumanized(valueMs) {
   }
 
   const sign = valueMs < 0 ? "-" : "";
+  const totalWeeks = Math.abs(valueMs) / MS_PER_WEEK;
+  if (shouldUseScientificNotation(totalWeeks)) {
+    return `${sign}${formatScientificNumber(totalWeeks)}w`;
+  }
+
   const totalCentiMs = Math.round(Math.abs(valueMs) * 100);
-  const centiMsPerWeek = 7 * 24 * 3600 * 1000 * 100;
+  const centiMsPerWeek = MS_PER_WEEK * 100;
   const centiMsPerDay = 24 * 3600 * 1000 * 100;
   const centiMsPerHour = 3600 * 1000 * 100;
   const centiMsPerMinute = 60 * 1000 * 100;
@@ -120,15 +187,15 @@ export function formatDuration(valueMs, displayMode = DEFAULT_DISPLAY_MODE) {
 
   switch (normalizedMode) {
     case "s":
-      return `${formatNumber(valueMs / 1000)} s`;
+      return formatScaledDuration(valueMs / 1000, "s");
     case "min":
-      return `${formatNumber(valueMs / (60 * 1000))} min`;
+      return formatScaledDuration(valueMs / (60 * 1000), "min");
     case "h":
-      return `${formatNumber(valueMs / (60 * 60 * 1000))} h`;
+      return formatScaledDuration(valueMs / (60 * 60 * 1000), "h");
     case "humanize":
       return formatHumanized(valueMs);
     case "ms":
     default:
-      return `${formatNumber(valueMs)} ms`;
+      return formatScaledDuration(valueMs, "ms");
   }
 }
