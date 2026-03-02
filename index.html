@@ -68,6 +68,25 @@
       }
     </script>
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      window.MathJax = {
+        startup: {
+          typeset: false,
+        },
+        chtml: {
+          displayAlign: "left",
+          displayIndent: "0",
+          linebreaks: {
+            automatic: true,
+            width: "container",
+          },
+        },
+      };
+    </script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"
+    ></script>
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
@@ -304,6 +323,17 @@
           <p id="chart-fallback-message" class="chart-fallback-message" role="status" hidden>
             The chart is unavailable right now. You can still use the table and summary values.
           </p>
+
+          <details id="chart-math-explainer" class="math-explainer">
+            <summary class="math-explainer-summary">Explain chart math</summary>
+            <div class="math-explainer-content">
+              <div id="math-explainer-equations" class="math-explainer-formulas"></div>
+
+              <p id="math-explainer-hover" class="math-explainer-hover" role="status" aria-live="polite">
+                Hover the chart to substitute a specific retry number.
+              </p>
+            </div>
+          </details>
         </section>
 
         <section class="content-block summary-panel">

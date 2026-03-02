@@ -31,6 +31,17 @@
   --chart-tooltip-bg: #111111;
   --chart-tooltip-text: #f5f5f5;
 
+  --formula-var-base: #1f5faa;
+  --formula-var-capped: #6d28d9;
+  --formula-var-jittered: #0f766e;
+  --formula-var-chart: #1f5faa;
+  --formula-var-initial: #9a3412;
+  --formula-var-factor: #006b4f;
+  --formula-var-increment: #7c2d12;
+  --formula-var-cap: #6d28d9;
+  --formula-var-retry: #b45309;
+  --formula-var-simulated: #0f766e;
+
   --toggle-selected-bg: #e9e4ff;
   --toggle-selected-text: #2f2460;
   --toggle-selected-border: #7f6bd0;
@@ -74,6 +85,17 @@
   --chart-grid: rgba(91, 74, 161, 0.35);
   --chart-tooltip-bg: #221c39;
   --chart-tooltip-text: #f4f4f5;
+
+  --formula-var-base: #8ec5ff;
+  --formula-var-capped: #c4b5fd;
+  --formula-var-jittered: #5eead4;
+  --formula-var-chart: #8ec5ff;
+  --formula-var-initial: #fdba74;
+  --formula-var-factor: #86efac;
+  --formula-var-increment: #fcd34d;
+  --formula-var-cap: #c4b5fd;
+  --formula-var-retry: #f59e0b;
+  --formula-var-simulated: #5eead4;
 
   --toggle-selected-bg: #2b2250;
   --toggle-selected-text: #f4f4f5;
@@ -594,6 +616,163 @@ select[aria-invalid="true"]:focus {
   margin-top: 0;
   min-height: 2.5rem;
   font-size: 0.95rem;
+}
+
+.math-explainer {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--border));
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.math-explainer-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.math-explainer-summary::-webkit-details-marker {
+  display: none;
+}
+
+.math-explainer-summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: 0.9rem;
+  transform-origin: 50% 55%;
+  transition: transform 120ms ease;
+}
+
+.math-explainer[open] .math-explainer-summary::before {
+  transform: rotate(90deg);
+}
+
+.math-explainer-summary:hover {
+  background: color-mix(in srgb, var(--surface) 90%, var(--border));
+}
+
+.math-explainer-summary:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--focus-ring);
+}
+
+.math-explainer-content {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.math-explainer-hover {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.math-explainer-formulas {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.math-explainer-formula {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--border));
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  font-variant-numeric: tabular-nums;
+}
+
+.math-explainer-formula math {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.math-explainer-formula math mrow,
+.math-explainer-formula math mi,
+.math-explainer-formula math mn,
+.math-explainer-formula math mo,
+.math-explainer-formula math mtext {
+  white-space: normal;
+}
+
+.math-explainer-formula mjx-container[jax="CHTML"][display="true"] {
+  inline-size: 100% !important;
+  min-inline-size: 0;
+  white-space: normal !important;
+  margin: 0 !important;
+}
+
+.math-explainer-formula mjx-math,
+.math-explainer-formula mjx-mi,
+.math-explainer-formula mjx-mn,
+.math-explainer-formula mjx-mo,
+.math-explainer-formula mjx-mtext {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.math-explainer-formula .math-var {
+  font-weight: 600;
+}
+
+.math-explainer-formula .math-var--base {
+  color: var(--formula-var-base);
+}
+
+.math-explainer-formula .math-var--capped {
+  color: var(--formula-var-capped);
+}
+
+.math-explainer-formula .math-var--jittered {
+  color: var(--formula-var-jittered);
+}
+
+.math-explainer-formula .math-var--chart {
+  color: var(--formula-var-chart);
+}
+
+.math-explainer-formula .math-var--initial {
+  color: var(--formula-var-initial);
+}
+
+.math-explainer-formula .math-var--factor {
+  color: var(--formula-var-factor);
+}
+
+.math-explainer-formula .math-var--increment {
+  color: var(--formula-var-increment);
+}
+
+.math-explainer-formula .math-var--cap {
+  color: var(--formula-var-cap);
+}
+
+.math-explainer-formula .math-var--retry {
+  color: var(--formula-var-retry);
+}
+
+.math-explainer-formula .math-var--simulated {
+  color: var(--formula-var-simulated);
 }
 
 .chart-toolbar {
@@ -1121,6 +1300,20 @@ tbody tr:last-child td {
 
   .chart-toggle-option {
     text-align: center;
+  }
+
+  .math-explainer-content {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .math-explainer-formula {
+    padding: 7px 8px;
+    min-height: 3.35rem;
+  }
+
+  .math-explainer-formula math {
+    font-size: 0.9rem;
   }
 
   .strategy-option {

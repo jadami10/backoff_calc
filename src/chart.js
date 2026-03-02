@@ -176,6 +176,51 @@ export function createDelayChart(canvas) {
   };
   let activePointIndex = null;
   let isPointerInsideChart = false;
+  /** @type {((activePoint: null | {retry:number, valueMs:number, minMs:number, maxMs:number}) => void) | null} */
+  let activePointChangeHandler = null;
+  let activePointChangeKey = "";
+
+  /**
+   * @param {number} index
+   */
+  function activePointPayload(index) {
+    const retry = Number(chart.data.labels[index]);
+    const valueMs = currentChartData.values[index];
+    if (!Number.isInteger(retry) || !Number.isFinite(valueMs)) {
+      return null;
+    }
+
+    const minCandidate = currentChartData.minValues[index];
+    const maxCandidate = currentChartData.maxValues[index];
+    const minMs = Number.isFinite(minCandidate) ? minCandidate : valueMs;
+    const maxMs = Number.isFinite(maxCandidate) ? maxCandidate : valueMs;
+
+    return { retry, valueMs, minMs, maxMs };
+  }
+
+  /**
+   * @param {null | {retry:number, valueMs:number, minMs:number, maxMs:number}} activePoint
+   */
+  function emitActivePointChange(activePoint) {
+    if (typeof activePointChangeHandler !== "function") {
+      return;
+    }
+
+    const nextKey =
+      activePoint == null
+        ? "null"
+        : `${activePoint.retry}:${activePoint.valueMs}:${activePoint.minMs}:${activePoint.maxMs}`;
+    if (nextKey === activePointChangeKey) {
+      return;
+    }
+    activePointChangeKey = nextKey;
+
+    try {
+      activePointChangeHandler(activePoint);
+    } catch (error) {
+      console.error("Active point change handler failed.", error);
+    }
+  }
 
   /**
    * @param {number} index
@@ -190,15 +235,14 @@ export function createDelayChart(canvas) {
    */
   function setActivePoint(index) {
     if (chart.data.datasets[0].data.length === 0) {
-      activePointIndex = null;
-      chart.setActiveElements([]);
-      chart.tooltip?.setActiveElements?.([], { x: 0, y: 0 });
+      clearActivePoint();
       return;
     }
 
     const clampedIndex = clampIndex(index);
     const point = chart.getDatasetMeta(0).data[clampedIndex];
     if (!point) {
+      clearActivePoint();
       return;
     }
 
@@ -207,12 +251,14 @@ export function createDelayChart(canvas) {
     const anchor = point.getProps(["x", "y"], true);
     chart.setActiveElements(activeElements);
     chart.tooltip?.setActiveElements?.(activeElements, anchor);
+    emitActivePointChange(activePointPayload(clampedIndex));
   }
 
   function clearActivePoint() {
     activePointIndex = null;
     chart.setActiveElements([]);
     chart.tooltip?.setActiveElements?.([], { x: 0, y: 0 });
+    emitActivePointChange(null);
   }
 
   /**
@@ -516,6 +562,23 @@ export function createDelayChart(canvas) {
       chart.update();
     },
     setTheme,
+    /**
+     * @param {((activePoint: null | {retry:number, valueMs:number, minMs:number, maxMs:number}) => void) | null} handler
+     */
+    setActivePointChangeHandler(handler) {
+      activePointChangeHandler = typeof handler === "function" ? handler : null;
+      activePointChangeKey = "";
+      if (typeof activePointChangeHandler !== "function") {
+        return;
+      }
+
+      if (activePointIndex === null) {
+        emitActivePointChange(null);
+        return;
+      }
+
+      emitActivePointChange(activePointPayload(activePointIndex));
+    },
     destroy() {
       canvas.removeEventListener("mousemove", handlePointerEnterOrMove);
       canvas.removeEventListener("mouseenter", handlePointerEnterOrMove);

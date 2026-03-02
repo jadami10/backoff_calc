@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generateSchedule, summarizeSchedule, validateConfig } from "../src/backoff.js";
+import {
+  buildChartMathExplanation,
+  generateSchedule,
+  summarizeSchedule,
+  validateConfig,
+} from "../src/backoff.js";
 
 test("exponential schedule without cap", () => {
   const schedule = generateSchedule({
@@ -288,4 +293,112 @@ test("validation rejects invalid values", () => {
       }),
     /Invalid configuration/,
   );
+});
+
+test("chart math explanation keeps retry symbolic when no point is hovered", () => {
+  const model = buildChartMathExplanation({
+    config: {
+      strategy: "exponential",
+      initialDelayMs: 500,
+      maxRetries: 5,
+      maxDelayMs: 1500,
+      factor: 2,
+      jitter: "none",
+    },
+    chartMode: "delay",
+    chartSeriesMode: "expected",
+    activePoint: null,
+  });
+
+  assert.equal(model.activeRetry, null);
+  assert.equal(model.resolved.rawDelayMs, null);
+  assert.equal(model.resolved.chartedValueMs, null);
+  assert.deepEqual(model.constants, {
+    initialDelayMs: 500,
+    factor: 2,
+    incrementMs: null,
+    maxDelayMs: 1500,
+  });
+  assert.equal(model.variableBindings.find((binding) => binding.symbol === "r")?.value, "symbolic");
+});
+
+test("chart math explanation resolves hovered linear equal-jitter values", () => {
+  const model = buildChartMathExplanation({
+    config: {
+      strategy: "linear",
+      initialDelayMs: 500,
+      maxRetries: 5,
+      maxDelayMs: null,
+      incrementMs: 500,
+      jitter: "equal",
+    },
+    chartMode: "delay",
+    chartSeriesMode: "expected",
+    activePoint: {
+      retry: 3,
+      valueMs: 1125,
+      minMs: 750,
+      maxMs: 1500,
+    },
+  });
+
+  assert.equal(model.activeRetry, 3);
+  assert.equal(model.chartSourceSymbol, "E");
+  assert.equal(model.resolved.rawDelayMs, 1500);
+  assert.equal(model.resolved.cappedDelayMs, 1500);
+  assert.equal(model.resolved.expectedDelayMs, 1125);
+  assert.equal(model.resolved.minDelayMs, 750);
+  assert.equal(model.resolved.maxDelayMs, 1500);
+  assert.equal(model.resolved.chartedValueMs, 1125);
+});
+
+test("chart math explanation uses hovered simulated value when chart series is simulated", () => {
+  const model = buildChartMathExplanation({
+    config: {
+      strategy: "fixed",
+      initialDelayMs: 1200,
+      maxRetries: 4,
+      maxDelayMs: 1000,
+      jitter: "full",
+    },
+    chartMode: "delay",
+    chartSeriesMode: "simulated",
+    activePoint: {
+      retry: 2,
+      valueMs: 321,
+      minMs: 0,
+      maxMs: 1000,
+    },
+  });
+
+  assert.equal(model.chartSeriesMode, "simulated");
+  assert.equal(model.chartSourceSymbol, "S");
+  assert.equal(model.resolved.expectedDelayMs, 500);
+  assert.equal(model.resolved.chartedValueMs, 321);
+});
+
+test("chart math explanation handles maxRetries = 0 without hover substitution", () => {
+  const model = buildChartMathExplanation({
+    config: {
+      strategy: "linear",
+      initialDelayMs: 100,
+      maxRetries: 0,
+      maxDelayMs: null,
+      incrementMs: 100,
+      jitter: "none",
+    },
+    chartMode: "cumulative",
+    chartSeriesMode: "expected",
+    activePoint: {
+      retry: 1,
+      valueMs: 100,
+      minMs: 100,
+      maxMs: 100,
+    },
+  });
+
+  assert.equal(model.maxRetries, 0);
+  assert.equal(model.activeRetry, null);
+  assert.equal(model.resolved.rawDelayMs, null);
+  assert.equal(model.variableBindings.find((binding) => binding.symbol === "Dcap")?.value, "\u221e");
 });

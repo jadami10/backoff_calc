@@ -1,4 +1,5 @@
 import {
+  buildChartMathExplanation,
   isJitterType,
   resolveJitterType,
   generateSchedule,
@@ -14,6 +15,7 @@ import { initThemeToggle } from "./theme.js";
 import {
   enforceNonNegativeIntegerInput,
   readConfigFromInputs,
+  renderChartMathExplanation,
   renderDelayTableHeaders,
   renderScheduleTable,
   renderSummary,
@@ -60,6 +62,7 @@ const primaryDelayHeader = document.querySelector("#primary-delay-header");
 const secondaryDelayHeader = document.querySelector("#secondary-delay-header");
 const tertiaryDelayHeader = document.querySelector("#tertiary-delay-header");
 const cumulativeDelayHeader = document.querySelector("#cumulative-delay-header");
+const chartMathEquations = document.querySelector("#math-explainer-equations");
 const initialDelayInput = document.querySelector("#initialDelayMs");
 const maxRetriesInput = document.querySelector("#maxRetries");
 const maxDelayInput = document.querySelector("#maxDelayMs");
@@ -88,6 +91,9 @@ const summaryElements = {
   finalDelayMs: document.querySelector("#summary-final-delay"),
   totalDelayMs: document.querySelector("#summary-total-delay"),
 };
+const chartMathElements = {
+  equations: chartMathEquations,
+};
 
 if (
   !(controls instanceof HTMLElement) ||
@@ -114,6 +120,7 @@ if (
   !(secondaryDelayHeader instanceof HTMLElement) ||
   !(tertiaryDelayHeader instanceof HTMLElement) ||
   !(cumulativeDelayHeader instanceof HTMLElement) ||
+  !(chartMathElements.equations instanceof HTMLElement) ||
   !(initialDelayInput instanceof HTMLInputElement) ||
   !(maxRetriesInput instanceof HTMLInputElement) ||
   !(maxDelayInput instanceof HTMLInputElement) ||
@@ -147,6 +154,7 @@ function createNoopChart() {
     clear() {},
     destroy() {},
     setTheme() {},
+    setActivePointChangeHandler() {},
   };
 }
 
@@ -159,12 +167,40 @@ function setChartUnavailableMessageVisible(visible) {
 
 let chart = createNoopChart();
 let hasWorkingChart = false;
+let activeChartPoint = null;
+let lastValidChartMathContext = null;
+
+function renderChartMathExplanationFromState() {
+  if (lastValidChartMathContext == null) {
+    return;
+  }
+
+  try {
+    const model = buildChartMathExplanation({
+      ...lastValidChartMathContext,
+      activePoint: activeChartPoint,
+    });
+    renderChartMathExplanation(model, chartMathElements, lastValidChartMathContext.displayMode);
+  } catch (error) {
+    console.error("Chart math explanation rendering failed.", error);
+  }
+}
+
+/**
+ * @param {null | {retry:number, valueMs:number, minMs:number, maxMs:number}} activePoint
+ */
+function handleChartActivePointChange(activePoint) {
+  activeChartPoint = activePoint;
+  renderChartMathExplanationFromState();
+}
 
 try {
   chart = createDelayChart(chartCanvas);
+  chart.setActivePointChangeHandler(handleChartActivePointChange);
   hasWorkingChart = true;
   setChartUnavailableMessageVisible(false);
 } catch (error) {
+  activeChartPoint = null;
   setChartUnavailableMessageVisible(true);
   console.error("Chart initialization failed.", error);
 }
@@ -225,7 +261,9 @@ function syncChartThemeWithCss(attempt = 0) {
   } catch (error) {
     hasWorkingChart = false;
     chart = createNoopChart();
+    activeChartPoint = null;
     setChartUnavailableMessageVisible(true);
+    renderChartMathExplanationFromState();
     console.error("Chart theming failed.", error);
   }
 }
@@ -532,7 +570,9 @@ function updateChartSafely(points, jitterType, chartSeriesMode, displayMode, cha
   } catch (error) {
     hasWorkingChart = false;
     chart = createNoopChart();
+    activeChartPoint = null;
     setChartUnavailableMessageVisible(true);
+    renderChartMathExplanationFromState();
     console.error("Chart rendering failed.", error);
   }
 }
@@ -669,16 +709,27 @@ function recompute() {
       cachedSimulationPoints[index]?.cumulativeSimulatedDelayMs ?? point.cumulativeDelayMs,
   }));
   const summary = summarizeSchedule(points);
+  lastValidChartMathContext = {
+    config,
+    chartMode,
+    chartSeriesMode,
+    displayMode,
+  };
 
-  renderDelayTableHeaders(displayMode, {
-    primaryDelay: primaryDelayHeader,
-    secondaryDelay: secondaryDelayHeader,
-    tertiaryDelay: tertiaryDelayHeader,
-    cumulativeDelay: cumulativeDelayHeader,
-  }, jitterType);
+  renderDelayTableHeaders(
+    displayMode,
+    {
+      primaryDelay: primaryDelayHeader,
+      secondaryDelay: secondaryDelayHeader,
+      tertiaryDelay: tertiaryDelayHeader,
+      cumulativeDelay: cumulativeDelayHeader,
+    },
+    jitterType,
+  );
   updateChartSafely(chartPoints, jitterType, chartSeriesMode, displayMode, chartMode);
   renderScheduleTable(points, scheduleBody, displayMode, jitterType);
   renderSummary(summary, summaryElements, displayMode);
+  renderChartMathExplanationFromState();
 }
 
 const debouncedRecompute = debounce(recompute, 100);
