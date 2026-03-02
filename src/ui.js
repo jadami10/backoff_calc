@@ -357,8 +357,12 @@ function createMathNode(tagName, text, className = "") {
  * @param {string} [className]
  */
 function createIdentifierNode(name, className = "") {
-  const node = createMathNode("mi", name, className);
-  node.setAttribute("mathvariant", "normal");
+  // Safari can overlap glyphs for long <mi> identifiers in superscripts.
+  const tagName = name.length > 1 ? "mtext" : "mi";
+  const node = createMathNode(tagName, name, className);
+  if (tagName === "mi") {
+    node.setAttribute("mathvariant", "normal");
+  }
   return node;
 }
 

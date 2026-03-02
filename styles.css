@@ -712,6 +712,8 @@ select[aria-invalid="true"]:focus {
 .math-explainer-formula math mo,
 .math-explainer-formula math mtext {
   white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .math-explainer-formula mjx-container[jax="CHTML"][display="true"] {
@@ -721,14 +723,19 @@ select[aria-invalid="true"]:focus {
   margin: 0 !important;
 }
 
-.math-explainer-formula mjx-math,
+.math-explainer-formula mjx-math {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
 .math-explainer-formula mjx-mi,
 .math-explainer-formula mjx-mn,
 .math-explainer-formula mjx-mo,
 .math-explainer-formula mjx-mtext {
   white-space: normal !important;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .math-explainer-formula .math-var {
