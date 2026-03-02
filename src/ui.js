@@ -94,12 +94,6 @@ export function enforceNonNegativeIntegerInput(input) {
     }
   });
 
-  input.addEventListener("paste", (event) => {
-    const pastedText = event.clipboardData?.getData("text") ?? "";
-    if (!/^\d+$/.test(pastedText)) {
-      event.preventDefault();
-    }
-  });
 }
 
 /**

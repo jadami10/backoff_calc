@@ -68,15 +68,6 @@
       }
     </script>
     <link rel="stylesheet" href="./styles.css" />
-    <script defer src="./src/mathjax-config.js"></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
-    ></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
-    ></script>
     <script type="module" src="./src/main.js"></script>
   </head>
   <body>
@@ -90,7 +81,6 @@
                 id="help-button"
                 class="help-button"
                 type="button"
-                aria-label="Open backoff help"
                 title="Backoff and jitter help"
                 aria-haspopup="dialog"
                 aria-controls="help-modal"
@@ -325,7 +315,7 @@
         <section class="content-block summary-panel">
           <div class="summary-grid">
             <article class="summary-card summary-card--display">
-              <h3>Time Unit</h3>
+              <h2>Time Unit</h2>
               <label class="summary-display-label" for="display-mode">
                 <span class="visually-hidden">Time unit display mode</span>
                 <select id="display-mode" name="displayMode">
@@ -338,15 +328,15 @@
               </label>
             </article>
             <article class="summary-card">
-              <h3>Total Retries</h3>
+              <h2>Total Retries</h2>
               <p id="summary-total-retries">-</p>
             </article>
             <article class="summary-card">
-              <h3>Final Retry Delay</h3>
+              <h2>Final Retry Delay</h2>
               <p id="summary-final-delay">-</p>
             </article>
             <article class="summary-card">
-              <h3>Total Cumulative Wait</h3>
+              <h2>Total Cumulative Wait</h2>
               <p id="summary-total-delay">-</p>
             </article>
           </div>
@@ -670,6 +660,5 @@
         </section>
       </article>
     </dialog>
-    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "891925f0a47d4c24b8f3161ff50809f1"}'></script><!-- End Cloudflare Web Analytics -->
   </body>
 </html>

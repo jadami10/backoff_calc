@@ -10,6 +10,7 @@ import { createDelayChart } from "./chart.js";
 import { resolveDisplayMode } from "./display.js";
 import { resolveChartMode } from "./chartMode.js";
 import { resolveChartSeriesMode } from "./chartSeriesMode.js";
+import { scheduleAnalyticsBeaconLoad } from "./runtimeLoader.js";
 import { createShareUrl, readShareStateFromUrl } from "./share.js";
 import { initThemeToggle } from "./theme.js";
 import {
@@ -170,6 +171,23 @@ let hasWorkingChart = false;
 let activeChartPoint = null;
 let lastValidChartMathContext = null;
 
+function initializeChart() {
+  if (hasWorkingChart) {
+    return;
+  }
+
+  try {
+    chart = createDelayChart(chartCanvas);
+    chart.setActivePointChangeHandler(handleChartActivePointChange);
+    hasWorkingChart = true;
+    setChartUnavailableMessageVisible(false);
+  } catch (error) {
+    activeChartPoint = null;
+    setChartUnavailableMessageVisible(true);
+    console.error("Chart initialization failed.", error);
+  }
+}
+
 function renderChartMathExplanationFromState() {
   if (lastValidChartMathContext == null) {
     return;
@@ -194,18 +212,8 @@ function handleChartActivePointChange(activePoint) {
   renderChartMathExplanationFromState();
 }
 
-try {
-  chart = createDelayChart(chartCanvas);
-  chart.setActivePointChangeHandler(handleChartActivePointChange);
-  hasWorkingChart = true;
-  setChartUnavailableMessageVisible(false);
-} catch (error) {
-  activeChartPoint = null;
-  setChartUnavailableMessageVisible(true);
-  console.error("Chart initialization failed.", error);
-}
-
 enforceNonNegativeIntegerInput(maxRetriesInput);
+scheduleAnalyticsBeaconLoad();
 
 function readCssVariable(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -911,6 +919,7 @@ if (
 }
 
 applySharedStateFromUrl();
+initializeChart();
 updateStrategyFields();
 syncJitterTriggerValue();
 updateChartSeriesVisibility();

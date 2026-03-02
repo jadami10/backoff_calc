@@ -3,6 +3,16 @@ import {
   resolveJitterType,
 } from "./backoff.js";
 import {
+  CategoryScale,
+  Chart as ChartConstructor,
+  Filler,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+} from "chart.js";
+import {
   DEFAULT_DISPLAY_MODE,
   formatDuration,
   resolveDisplayMode,
@@ -53,6 +63,16 @@ const hoverGuidePlugin = {
     ctx.restore();
   },
 };
+
+ChartConstructor.register(
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Filler,
+);
 
 /**
  * @param {{
@@ -155,11 +175,6 @@ function yAxisTitle(displayMode, chartMode) {
  * @param {HTMLCanvasElement} canvas
  */
 export function createDelayChart(canvas) {
-  const ChartConstructor = globalThis.Chart;
-  if (!ChartConstructor) {
-    throw new Error("Chart.js is not loaded.");
-  }
-
   let currentDisplayMode = DEFAULT_DISPLAY_MODE;
   let currentChartMode = DEFAULT_CHART_MODE;
   let currentChartSeriesMode = DEFAULT_CHART_SERIES_MODE;

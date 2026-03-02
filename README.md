@@ -15,18 +15,25 @@ Made fully with AI tooling.
 
 ## Local Development
 
-1. Install dependencies (none beyond lockfile metadata):
-   - `npm ci`
+1. Install dependencies:
+   - `bun install`
 2. Run tests:
-   - `npm test`
-3. Serve the static site:
-   - `python3 -m http.server 8080`
-4. Open `http://localhost:8080`.
+   - `bun run test`
+3. Build the site:
+   - `bun run build`
+4. Serve the built output:
+   - `bun run serve`
+5. Open `http://localhost:8080`.
+
+## Build Output
+
+- Bundled application files are emitted to `dist/`.
+- Deploy the `dist/` directory to static hosting.
 
 ## CI
 
 GitHub Actions workflow:
 
 - Trigger: push to `dev`
-- Steps: `npm ci` then `npm test`
+- Steps: `bun install --frozen-lockfile`, `bun run check`
 - On success: promote the tested commit to `main`
