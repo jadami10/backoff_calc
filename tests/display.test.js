@@ -10,6 +10,7 @@ import {
 } from "../src/display.js";
 
 const WEEK_MS = 7 * 24 * 3600 * 1000;
+const YEAR_MS = 52 * WEEK_MS;
 
 function formatNumber(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -28,7 +29,14 @@ test("human-readable mode uses compact mixed units", () => {
   assert.equal(formatDuration(61_000, "humanize"), "1m 1s");
   assert.equal(formatDuration(3_661_250, "humanize"), "1h 1m 1s 250ms");
   assert.equal(formatDuration(86_400_000, "humanize"), "1d");
-  assert.equal(formatDuration(694_861_250, "humanize"), "1w 1d 1h 1m 1s 250ms");
+  assert.equal(formatDuration(90_061_250, "humanize"), "1d 1h 1m 1s");
+  assert.equal(formatDuration(694_861_250, "humanize"), "1w 1d 1h 1m");
+  assert.equal(formatDuration(WEEK_MS * 52, "humanize"), "1y");
+  assert.equal(formatDuration(WEEK_MS * 53, "humanize"), "1y 1w");
+  assert.equal(
+    formatDuration(YEAR_MS + WEEK_MS + 86_400_000 + 3_661_250, "humanize"),
+    "1y 1w 1d 1h",
+  );
 });
 
 test("human-readable mode handles zero and fractional milliseconds", () => {
@@ -61,10 +69,10 @@ test("scientific notation preserves sign and explicit mode zero formatting", () 
   assert.equal(formatDuration(0, "ms"), "0 ms");
 });
 
-test("human-readable mode uses mixed units below weeks cutoff and scientific weeks at cutoff", () => {
-  assert.equal(formatDuration(WEEK_MS * 10 ** 10, "humanize"), "10,000,000,000w");
-  assert.equal(formatDuration(WEEK_MS * 10 ** 11, "humanize"), "1e+11w");
-  assert.equal(formatDuration(-WEEK_MS * 10 ** 11, "humanize"), "-1e+11w");
+test("human-readable mode uses mixed units below years cutoff and scientific years at cutoff", () => {
+  assert.equal(formatDuration(YEAR_MS * 10 ** 10, "humanize"), "10,000,000,000y");
+  assert.equal(formatDuration(YEAR_MS * 10 ** 11, "humanize"), "1e+11y");
+  assert.equal(formatDuration(-YEAR_MS * 10 ** 11, "humanize"), "-1e+11y");
 });
 
 test("non-finite values render as placeholder", () => {

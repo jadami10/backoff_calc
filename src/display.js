@@ -8,6 +8,8 @@ export const DEFAULT_DISPLAY_MODE = "humanize";
 const DIGIT_CUTOFF = 12;
 const SCIENTIFIC_SIGNIFICANT_DIGITS = 4;
 const MS_PER_WEEK = 7 * 24 * 3600 * 1000;
+const MS_PER_YEAR = 52 * MS_PER_WEEK;
+const MAX_HUMANIZED_PARTS = 4;
 
 function formatNumber(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -120,12 +122,13 @@ function formatHumanized(valueMs) {
   }
 
   const sign = valueMs < 0 ? "-" : "";
-  const totalWeeks = Math.abs(valueMs) / MS_PER_WEEK;
-  if (shouldUseScientificNotation(totalWeeks)) {
-    return `${sign}${formatScientificNumber(totalWeeks)}w`;
+  const totalYears = Math.abs(valueMs) / MS_PER_YEAR;
+  if (shouldUseScientificNotation(totalYears)) {
+    return `${sign}${formatScientificNumber(totalYears)}y`;
   }
 
   const totalCentiMs = Math.round(Math.abs(valueMs) * 100);
+  const centiMsPerYear = MS_PER_YEAR * 100;
   const centiMsPerWeek = MS_PER_WEEK * 100;
   const centiMsPerDay = 24 * 3600 * 1000 * 100;
   const centiMsPerHour = 3600 * 1000 * 100;
@@ -133,6 +136,9 @@ function formatHumanized(valueMs) {
   const centiMsPerSecond = 1000 * 100;
 
   let remaining = totalCentiMs;
+
+  const years = Math.floor(remaining / centiMsPerYear);
+  remaining -= years * centiMsPerYear;
 
   const weeks = Math.floor(remaining / centiMsPerWeek);
   remaining -= weeks * centiMsPerWeek;
@@ -152,6 +158,9 @@ function formatHumanized(valueMs) {
   const millis = remaining / 100;
   const parts = [];
 
+  if (years > 0) {
+    parts.push(`${years.toLocaleString()}y`);
+  }
   if (weeks > 0) {
     parts.push(`${weeks.toLocaleString()}w`);
   }
@@ -161,17 +170,17 @@ function formatHumanized(valueMs) {
   if (hours > 0) {
     parts.push(`${hours.toLocaleString()}h`);
   }
-  if (minutes > 0) {
+  if (minutes > 0 && years === 0) {
     parts.push(`${minutes.toLocaleString()}m`);
   }
-  if (seconds > 0) {
+  if (seconds > 0 && years === 0 && weeks === 0) {
     parts.push(`${seconds.toLocaleString()}s`);
   }
-  if (millis > 0 || parts.length === 0) {
+  if ((millis > 0 || parts.length === 0) && years === 0 && weeks === 0 && days === 0) {
     parts.push(`${formatNumber(millis)}ms`);
   }
 
-  return `${sign}${parts.join(" ")}`;
+  return `${sign}${parts.slice(0, MAX_HUMANIZED_PARTS).join(" ")}`;
 }
 
 /**
